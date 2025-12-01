@@ -110,7 +110,10 @@ bin/
 # ===========================
 # OS
 # ===========================
-
+walkthrough.md
+verify_data.py
+endpoints.json
+data.json
 # macOS
 .DS_Store
 .AppleDouble
