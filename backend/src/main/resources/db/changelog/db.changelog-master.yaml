@@ -1,0 +1,11 @@
+databaseChangeLog:
+  - include:
+      file: db/changelog/changes/001-initial-schema.yaml
+  - include:
+      file: db/changelog/changes/002-data-endpoint-redesign.yaml
+  - include:
+      file: db/changelog/changes/003-create-api-keys-table.yaml
+  - include:
+      file: db/changelog/changes/004-create-tenants-table.yaml
+  - include:
+      file: db/changelog/changes/005-initial-data.yaml

@@ -1,0 +1,46 @@
+package com.example.ldop.service;
+
+import com.example.ldop.domain.Connector;
+import com.example.ldop.repository.ConnectorRepository;
+import com.zaxxer.hikari.HikariDataSource;
+import org.springframework.stereotype.Service;
+
+import javax.sql.DataSource;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+
+@Service
+public class DataSourceManager {
+
+    private final Map<UUID, DataSource> dataSourceCache = new ConcurrentHashMap<>();
+    private final ConnectorRepository connectorRepository;
+    private final DataSourceFactory dataSourceFactory;
+
+    public DataSourceManager(ConnectorRepository connectorRepository, DataSourceFactory dataSourceFactory) {
+        this.connectorRepository = connectorRepository;
+        this.dataSourceFactory = dataSourceFactory;
+    }
+
+    public DataSource getDataSource(UUID connectorId) {
+        return dataSourceCache.computeIfAbsent(connectorId, this::createDataSource);
+    }
+
+    private DataSource createDataSource(UUID connectorId) {
+        Connector connector = connectorRepository.findById(connectorId)
+                .orElseThrow(() -> new IllegalArgumentException("Connector not found: " + connectorId));
+        
+        if (!connector.isActive()) {
+            throw new IllegalStateException("Connector is not active: " + connectorId);
+        }
+
+        return dataSourceFactory.createDataSource(connector);
+    }
+
+    public void invalidate(UUID connectorId) {
+        DataSource ds = dataSourceCache.remove(connectorId);
+        if (ds instanceof HikariDataSource) {
+            ((HikariDataSource) ds).close();
+        }
+    }
+}

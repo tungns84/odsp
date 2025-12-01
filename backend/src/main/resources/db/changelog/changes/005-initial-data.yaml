@@ -1,0 +1,52 @@
+databaseChangeLog:
+  - changeSet:
+      id: 005-initial-data-tenant
+      author: antigravity
+      changes:
+        - insert:
+            tableName: tenants
+            columns:
+              - column:
+                  name: id
+                  value: "default-tenant"
+              - column:
+                  name: name
+                  value: "Default Tenant"
+              - column:
+                  name: description
+                  value: "Default tenant for E2E testing"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+              - column:
+                  name: created_at
+                  valueDate: "2024-01-01T00:00:00"
+
+  - changeSet:
+      id: 005-initial-data-api-key
+      author: antigravity
+      changes:
+        - insert:
+            tableName: api_keys
+            columns:
+              - column:
+                  name: id
+                  value: "123e4567-e89b-12d3-a456-426614174000"
+              - column:
+                  name: tenant_id
+                  value: "default-tenant"
+              - column:
+                  name: name
+                  value: "E2E Test Key"
+              - column:
+                  name: key_hash
+                  value: "$2a$10$z9oPBYxu5PYfcAdCSj.9zeN8fQdvwChf5tVhwfIgSM61wuUBAmrQq"
+              - column:
+                  name: prefix
+                  value: "ldop_sk_"
+              - column:
+                  name: status
+                  value: "ACTIVE"
+              - column:
+                  name: created_at
+                  valueDate: "2024-01-01T00:00:00"

@@ -1,0 +1,262 @@
+﻿// CreateDataEndpointWizard.tsx
+// This wizard loads connectors from the backend via connectorService.
+
+import React, { useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { WizardLayout } from './components/WizardLayout';
+import { Step1SelectConnector } from './components/Step1SelectConnector';
+import { Step2DefineSource } from './components/Step2DefineSource';
+import { Step3BuildQuery } from './components/Step3BuildQuery';
+import { Step4Finalize } from './components/Step4Finalize';
+import type { WizardState } from '../../types/dataEndpoint';
+import type { Connector, TableMetadata } from '../../types/connector';
+import { connectorService, dataEndpointService } from '../../services';
+
+export const CreateDataEndpointWizard: React.FC = () => {
+    // URL param â€“ preâ€‘selected connector id (used when wizard is opened from a connector view)
+    const [searchParams] = useSearchParams();
+    const preSelectedConnectorId = searchParams.get('connectorId');
+
+    // Wizard state (same shape as before)
+    const [wizardState, setWizardState] = useState<WizardState>({
+        currentStep: preSelectedConnectorId ? 2 : 1, // skip step 1 if a connector is preâ€‘selected
+        selectedConnectorId: preSelectedConnectorId,
+        sourceType: 'table',
+        tableName: '',
+        selectedColumns: [],
+        filters: [],
+        sortOrder: null,
+        customSQL: '',
+        endpointName: '',
+        description: '',
+    });
+
+    // UI helpers for a preâ€‘selected connector name (display only)
+    const [preSelectedConnectorName, setPreSelectedConnectorName] = useState<string>('');
+
+    // Connectors loaded from the backend
+    const [connectors, setConnectors] = useState<Connector[]>([]);
+    const [loading, setLoading] = useState<boolean>(true);
+    const [error, setError] = useState<string | null>(null);
+
+    // Tables loaded for the selected connector
+    const [tables, setTables] = useState<TableMetadata[]>([]);
+
+    // ---------------------------------------------------------------------
+    // Load connectors from the API
+    // ---------------------------------------------------------------------
+    const loadConnectors = async () => {
+        try {
+            setLoading(true);
+            setError(null);
+            const response = await connectorService.getAll();
+            setConnectors(response.data);
+        } catch (err) {
+            console.error('Failed to load connectors:', err);
+            setError('Failed to load connectors. Please try again.');
+        } finally {
+            setLoading(false);
+        }
+    };
+
+    // Load tables for the selected connector
+    const loadTables = async (connectorId: string) => {
+        try {
+            const response = await connectorService.getTables(connectorId);
+            setTables(response.data);
+        } catch (err) {
+            console.error('Failed to load tables:', err);
+            alert('Failed to load tables for the selected connector.');
+        }
+    };
+
+    // Initial load
+    useEffect(() => {
+        loadConnectors();
+    }, []);
+
+    // Resolve the name of a preâ€‘selected connector once we have the list
+    useEffect(() => {
+        if (preSelectedConnectorId) {
+            const conn = connectors.find(c => c.id === preSelectedConnectorId);
+            if (conn) {
+                setPreSelectedConnectorName(conn.name);
+                loadTables(preSelectedConnectorId);
+            }
+        }
+    }, [preSelectedConnectorId, connectors]);
+
+    // Load tables when connector is selected in step 1
+    useEffect(() => {
+        if (wizardState.selectedConnectorId && !preSelectedConnectorId) {
+            loadTables(wizardState.selectedConnectorId);
+        }
+    }, [wizardState.selectedConnectorId, preSelectedConnectorId]);
+
+    // ---------------------------------------------------------------------
+    // Navigation helpers (unchanged logic, only state shape matters)
+    // ---------------------------------------------------------------------
+    const handleNext = () => {
+        // Validation per step
+        if (wizardState.currentStep === 1 && !wizardState.selectedConnectorId) {
+            alert('Please select a connector');
+            return;
+        }
+        if (wizardState.currentStep === 2) {
+            if (wizardState.sourceType === 'table' && !wizardState.tableName) {
+                alert('Please select a table');
+                return;
+            }
+            if (wizardState.sourceType === 'customSQL' && !wizardState.customSQL) {
+                alert('Please enter a SQL query');
+                return;
+            }
+        }
+        if (wizardState.currentStep === 3 && wizardState.selectedColumns.length === 0) {
+            alert('Please select at least one column');
+            return;
+        }
+
+        // Skip step 3 when using custom SQL
+        if (wizardState.currentStep === 2 && wizardState.sourceType === 'customSQL') {
+            setWizardState(prev => ({ ...prev, currentStep: 4 }));
+        } else {
+            setWizardState(prev => ({ ...prev, currentStep: prev.currentStep + 1 }));
+        }
+    };
+
+    const handleBack = () => {
+        // Skip step 3 when going back from step 4 in custom SQL mode
+        if (wizardState.currentStep === 4 && wizardState.sourceType === 'customSQL') {
+            setWizardState(prev => ({ ...prev, currentStep: 2 }));
+        } else if (wizardState.currentStep === 2 && preSelectedConnectorId) {
+            // cannot go back to step 1 when a connector was preâ€‘selected
+            return;
+        } else {
+            setWizardState(prev => ({ ...prev, currentStep: prev.currentStep - 1 }));
+        }
+    };
+
+    const handleCancel = () => {
+        if (confirm('Are you sure you want to cancel? All progress will be lost.')) {
+            window.history.back();
+        }
+    };
+
+    const handleSave = async () => {
+            case 1:
+return 'Select Connector';
+            case 2:
+return preSelectedConnectorId ? `Define Source - ${preSelectedConnectorName}` : 'Define Source';
+            case 3:
+return 'Build Query';
+            case 4:
+return 'Finalize';
+            default:
+return '';
+        }
+    };
+
+const renderStep = () => {
+    switch (wizardState.currentStep) {
+        case 1:
+            return (
+                <Step1SelectConnector
+                    connectors={connectors}
+                    selectedConnectorId={wizardState.selectedConnectorId}
+                    onSelect={id => setWizardState(prev => ({ ...prev, selectedConnectorId: id }))}
+                />
+            );
+        case 2:
+            return (
+                <Step2DefineSource
+                    sourceType={wizardState.sourceType}
+                    tableName={wizardState.tableName}
+                    customSQL={wizardState.customSQL}
+                    tables={tables}
+                    connectorId={wizardState.selectedConnectorId}
+                    onSourceTypeChange={type => setWizardState(prev => ({ ...prev, sourceType: type }))}
+                    onTableNameChange={name => setWizardState(prev => ({ ...prev, tableName: name, selectedColumns: [] }))}
+                    onCustomSQLChange={sql => setWizardState(prev => ({ ...prev, customSQL: sql }))}
+                />
+            );
+        case 3:
+            const selectedTable = tables.find(t => t.name === wizardState.tableName);
+            const columns = selectedTable ? selectedTable.columns.map(c => c.name) : [];
+            return (
+                <Step3BuildQuery
+                    tableName={wizardState.tableName}
+                    columns={columns}
+                    selectedColumns={wizardState.selectedColumns}
+                    filters={wizardState.filters}
+                    sortOrder={wizardState.sortOrder}
+                    onColumnsChange={cols => setWizardState(prev => ({ ...prev, selectedColumns: cols }))}
+                    onFiltersChange={filters => setWizardState(prev => ({ ...prev, filters }))}
+                    onSortOrderChange={sort => setWizardState(prev => ({ ...prev, sortOrder: sort }))}
+                />
+            );
+        case 4:
+            return (
+                <Step4Finalize
+                    wizardState={wizardState}
+                    connectors={connectors}
+                    endpointName={wizardState.endpointName}
+                    description={wizardState.description}
+                    onEndpointNameChange={name => setWizardState(prev => ({ ...prev, endpointName: name }))}
+                    onDescriptionChange={desc => setWizardState(prev => ({ ...prev, description: desc }))}
+                />
+            );
+        default:
+            return null;
+    }
+};
+
+// ---------------------------------------------------------------------
+// Render
+// ---------------------------------------------------------------------
+return (
+    <WizardLayout
+        currentStep={wizardState.currentStep}
+        totalSteps={4}
+        stepTitle={`Create Data Endpoint - ${getStepTitle()}`}
+        onNext={handleNext}
+        onBack={handleBack}
+        onCancel={handleCancel}
+        onSave={handleSave}
+        showSave={wizardState.currentStep === 4}
+        hideBack={wizardState.currentStep === 2 && !!preSelectedConnectorId}
+    >
+        {/* Loading state */}
+        {loading && (
+            <div className="flex items-center justify-center py-12">
+                <div className="flex flex-col items-center gap-3">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+                    <p className="text-sm text-slate-400">Loading connectorsâ€¦</p>
+                </div>
+            </div>
+        )}
+
+        {/* Error state */}
+        {error && !loading && (
+            <div className="mb-4 rounded-xl border border-red-500/20 bg-red-500/10 p-4">
+                <div className="flex items-center gap-3">
+                    <span className="material-symbols-outlined text-red-500">error</span>
+                    <div>
+                        <p className="font-medium text-red-500">Error</p>
+                        <p className="text-sm text-red-400">{error}</p>
+                    </div>
+                    <button
+                        onClick={loadConnectors}
+                        className="ml-auto rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30"
+                    >
+                        Retry
+                    </button>
+                </div>
+            </div>
+        )}
+
+        {/* Main wizard steps â€“ only show when not loading/error */}
+        {!loading && !error && renderStep()}
+    </WizardLayout>
+);
+};

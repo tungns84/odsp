@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Create New Data Endpoint</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<script>
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#1677ff",
+            "background-light": "#f6f7f8",
+            "background-dark": "#141414",
+            "container-dark": "#1F1F1F",
+            "border-dark": "#303030",
+            "text-light": "#FFFFFFD9",
+            "text-heading": "#FFFFFF",
+            "text-secondary": "#9dabb9",
+            "success": "#52C41A",
+            "error": "#FF4D4F"
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.375rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+  </style>
+</head>
+<body class="font-display bg-background-light dark:bg-background-dark">
+<div class="flex h-auto min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex w-64 flex-col border-r border-border-dark bg-container-dark p-4">
+<div class="flex flex-col gap-4">
+<div class="flex items-center gap-3 px-2 py-2">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuDvNhlqFQM-nsfbWQsJiIiviqSgkmQe7buKW6zphPC4ZNQeFQOkmxWmbDyEdo5uKlcs2yxQ8kwb4sw0XeIgcNSvZ1UHlU5YyOHapj3gAJ1PEanfQrWz2_GC4gdqzZ3CnsoPVg6OUzfytaN5pM8FznG1yKWwcjQSZFMf1IphhD4dCBZ3y2_acWUHatL585mKhx9mm5gVPo8r_Tf_M3-4b-TQCnRxVjdXuGsAUH5fgWkho8gZVJX1tAgNkTbCWh5Or_ZxZb3KvNZVtxc");'></div>
+<div class="flex flex-col">
+<h1 class="text-text-heading text-base font-medium leading-normal">John Doe</h1>
+<p class="text-text-secondary text-sm font-normal leading-normal">Administrator</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-light hover:bg-white/10" href="#">
+<span class="material-symbols-outlined text-text-light">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 rounded-lg bg-primary/20 px-3 py-2 text-primary" href="#">
+<span class="material-symbols-outlined text-primary" style="font-variation-settings: 'FILL' 1;">webhook</span>
+<p class="text-sm font-medium leading-normal">Endpoints</p>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-light hover:bg-white/10" href="#">
+<span class="material-symbols-outlined text-text-light">power</span>
+<p class="text-sm font-medium leading-normal">Connectors</p>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-light hover:bg-white/10" href="#">
+<span class="material-symbols-outlined text-text-light">history</span>
+<p class="text-sm font-medium leading-normal">Logs</p>
+</a>
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-light hover:bg-white/10" href="#">
+<span class="material-symbols-outlined text-text-light">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+</nav>
+</div>
+<div class="mt-auto flex flex-col gap-1">
+<a class="flex items-center gap-3 rounded-lg px-3 py-2 text-text-light hover:bg-white/10" href="#">
+<span class="material-symbols-outlined text-text-light">help</span>
+<p class="text-sm font-medium leading-normal">Help Center</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 overflow-y-auto p-8">
+<div class="mx-auto max-w-5xl">
+<!-- PageHeading -->
+<div class="mb-8 flex flex-wrap items-start justify-between gap-4">
+<div class="flex flex-col gap-2">
+<p class="text-text-heading text-3xl font-bold leading-tight tracking-tight">Create New Data Endpoint</p>
+<p class="text-text-secondary text-base font-normal leading-normal">Follow the steps to configure and save your new endpoint.</p>
+</div>
+</div>
+<!-- Main Card -->
+<div class="rounded-lg border border-border-dark bg-container-dark">
+<!-- Tabs (Wizard Progress Bar) -->
+<div class="border-b border-border-dark px-6">
+<div class="flex gap-8">
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-primary pt-4 pb-3 text-primary" href="#">
+<p class="text-sm font-bold leading-normal">1. Select Connector</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pt-4 pb-3 text-text-secondary" href="#">
+<p class="text-sm font-bold leading-normal">2. Define Source</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pt-4 pb-3 text-text-secondary" href="#">
+<p class="text-sm font-bold leading-normal">3. Build Query</p>
+</a>
+<a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pt-4 pb-3 text-text-secondary" href="#">
+<p class="text-sm font-bold leading-normal">4. Finalize</p>
+</a>
+</div>
+</div>
+<!-- Step 1 Content -->
+<div class="p-6">
+<h2 class="text-text-heading text-xl font-bold leading-tight tracking-tight">1. Select a Connector</h2>
+<p class="text-text-secondary mt-1 text-base font-normal leading-normal">Choose one of the configured data sources below to begin building your endpoint.</p>
+<div class="mt-6">
+<label class="sr-only" for="search-connector">Search Connectors</label>
+<div class="relative">
+<div class="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+<span class="material-symbols-outlined text-text-secondary">search</span>
+</div>
+<input class="w-full max-w-sm rounded-md border-border-dark bg-background-dark py-2 pl-10 pr-4 text-text-light placeholder-text-secondary focus:border-primary focus:ring-primary" id="search-connector" placeholder="Search connectors..." type="search"/>
+</div>
+</div>
+<fieldset class="mt-6">
+<legend class="sr-only">Connector Options</legend>
+<div class="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+<label class="flex cursor-pointer items-start gap-4 rounded-lg border-2 border-primary bg-primary/10 p-4 ring-2 ring-primary" for="postgresql">
+<input checked="" class="mt-1 size-4 shrink-0 border-border-dark bg-background-dark text-primary focus:ring-primary" id="postgresql" name="connector" type="radio"/>
+<div class="flex flex-col">
+<span class="text-base font-semibold text-text-heading">PostgreSQL Production</span>
+<span class="text-sm text-text-secondary">Main production database for customer data.</span>
+</div>
+</label>
+<label class="flex cursor-pointer items-start gap-4 rounded-lg border-2 border-border-dark bg-transparent p-4 hover:border-primary/50" for="mysql">
+<input class="mt-1 size-4 shrink-0 border-border-dark bg-background-dark text-primary focus:ring-primary" id="mysql" name="connector" type="radio"/>
+<div class="flex flex-col">
+<span class="text-base font-semibold text-text-heading">MySQL Analytics</span>
+<span class="text-sm text-text-secondary">Data warehouse for internal analytics and reporting.</span>
+</div>
+</label>
+<label class="flex cursor-pointer items-start gap-4 rounded-lg border-2 border-border-dark bg-transparent p-4 hover:border-primary/50" for="snowflake">
+<input class="mt-1 size-4 shrink-0 border-border-dark bg-background-dark text-primary focus:ring-primary" id="snowflake" name="connector" type="radio"/>
+<div class="flex flex-col">
+<span class="text-base font-semibold text-text-heading">Snowflake Staging</span>
+<span class="text-sm text-text-secondary">Staging environment for ETL pipeline testing.</span>
+</div>
+</label>
+</div>
+</fieldset>
+<!-- Navigation Buttons -->
+<div class="mt-8 flex justify-end gap-3 border-t border-border-dark pt-6">
+<button class="rounded-md bg-transparent px-4 py-2 text-sm font-semibold text-text-light shadow-sm ring-1 ring-inset ring-border-dark hover:bg-white/10" type="button">Cancel</button>
+<button class="rounded-md bg-primary px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-primary" type="button">Next</button>
+</div>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

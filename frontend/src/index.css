@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+
+  /* ========================================
+     DEFAULT THEME (BLUE) - DARK MODE
+     ======================================== */
+  :root,
+  [data-theme="blue"],
+  [data-mode="dark"] {
+    /* Primary colors */
+    --color-primary: 207 89% 61%;
+    /* #137fec */
+    --color-primary-hover: 207 89% 55%;
+    --color-primary-active: 207 89% 50%;
+
+    /* Surface colors (dark backgrounds) */
+    --color-surface: 216 33% 10%;
+    /* #101922 - main background */
+    --color-surface-elevated: 216 30% 14%;
+    /* elevated panels */
+    --color-surface-elevated-hover: 216 28% 18%;
+    --color-surface-card: 216 28% 16%;
+    /* cards */
+
+    /* Border colors */
+    --color-surface-border: 216 20% 25%;
+    /* slate-700 equivalent */
+    --color-surface-border-subtle: 216 15% 20%;
+    /* slate-200/10 equivalent */
+
+    /* Text colors */
+    --color-text-primary: 0 0% 100%;
+    /* white */
+    --color-text-secondary: 215 20% 65%;
+    /* slate-300 */
+    --color-text-tertiary: 215 15% 50%;
+    /* slate-400 */
+
+    /* Status colors */
+    --color-success: 142 76% 36%;
+    /* green-500 */
+    --color-success-bg: 142 76% 36% / 0.1;
+    --color-success-border: 142 76% 36% / 0.2;
+    --color-error: 0 84% 60%;
+    /* red-500 */
+    --color-error-bg: 0 84% 60% / 0.1;
+    --color-error-border: 0 84% 60% / 0.2;
+  }
+
+  /* ========================================
+     LIGHT MODE
+     ======================================== */
+  [data-mode="light"] {
+    /* Surface colors (light backgrounds) */
+    --color-surface: 0 0% 98%;
+    /* very light gray */
+    --color-surface-elevated: 0 0% 100%;
+    /* white */
+    --color-surface-elevated-hover: 220 13% 96%;
+    /* hover: slight gray */
+    --color-surface-card: 0 0% 100%;
+    /* white cards */
+
+    /* Border colors */
+    --color-surface-border: 220 13% 91%;
+    /* light gray border */
+    --color-surface-border-subtle: 220 13% 95%;
+    /* very light border */
+
+    /* Text colors */
+    --color-text-primary: 0 0% 9%;
+    /* near black */
+    --color-text-secondary: 215 16% 47%;
+    /* medium gray */
+    --color-text-tertiary: 215 13% 65%;
+    /* light gray */
+
+    /* Status colors (adjusted for light mode) */
+    --color-success-bg: 142 76% 36% / 0.15;
+    --color-error-bg: 0 84% 60% / 0.15;
+  }
+
+  /* ========================================
+     PURPLE THEME
+     ======================================== */
+  [data-theme="purple"] {
+    --color-primary: 271 76% 53%;
+    /* purple-500 */
+    --color-primary-hover: 271 76% 48%;
+    --color-primary-active: 271 76% 43%;
+  }
+
+  /* ========================================
+     GREEN THEME
+     ======================================== */
+  [data-theme="green"] {
+    --color-primary: 142 71% 45%;
+    /* green-600 */
+    --color-primary-hover: 142 71% 40%;
+    --color-primary-active: 142 71% 35%;
+  }
+
+  /* ========================================
+     ORANGE THEME
+     ======================================== */
+  [data-theme="orange"] {
+    --color-primary: 25 95% 53%;
+    /* orange-500 */
+    --color-primary-hover: 25 95% 48%;
+    --color-primary-active: 25 95% 43%;
+  }
+
+  /* ========================================
+     RED THEME
+     ======================================== */
+  [data-theme="red"] {
+    --color-primary: 0 72% 51%;
+    /* red-600 */
+    --color-primary-hover: 0 72% 46%;
+    --color-primary-active: 0 72% 41%;
+  }
+
+  /* ========================================
+     BASE STYLES
+     ======================================== */
+  body {
+    @apply font-display bg-surface;
+  }
+}
+
+.material-symbols-outlined {
+  font-variation-settings:
+    'FILL' 0,
+    'wght' 400,
+    'GRAD' 0,
+    'opsz' 24
+}

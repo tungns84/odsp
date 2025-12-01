@@ -1,0 +1,190 @@
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { StatsCards } from './components/StatsCards';
+import { ConnectorFilters } from './components/ConnectorFilters';
+import { ConnectorTable } from './components/ConnectorTable';
+import { CreateConnectorModal } from './components/CreateConnectorModal';
+import { ConnectorDetails } from './components/ConnectorDetails';
+import { EditConnectorModal } from './components/EditConnectorModal';
+import type { Connector, ConnectorStats, ConnectorFilters as ConnectorFiltersType, AuditLog } from '../../types/connector';
+
+// Mock data
+const mockConnectors: Connector[] = [
+    {
+        id: '1',
+        name: 'PostgreSQL Prod DB',
+        type: 'DATABASE',
+        status: 'APPROVED',
+        createdAt: '2023-10-26'
+    },
+    {
+        id: '2',
+        name: 'Salesforce API',
+        type: 'API',
+        status: 'INIT',
+        createdAt: '2023-10-25'
+    },
+    {
+        id: '3',
+        name: 'Google Analytics',
+        type: 'API',
+        status: 'APPROVED',
+        createdAt: '2023-10-24'
+    },
+    {
+        id: '4',
+        name: 'S3 Bucket',
+        type: 'FILE_SYSTEM',
+        status: 'REJECTED',
+        createdAt: '2023-10-23'
+    },
+    {
+        id: '5',
+        name: 'Stripe Webhooks',
+        type: 'API',
+        status: 'APPROVED',
+        createdAt: '2023-10-22'
+    }
+];
+
+const initialFilters: ConnectorFiltersType = {
+    search: '',
+    type: '',
+    status: '',
+    createdDate: ''
+};
+
+/**
+ * ConnectorManagement Component
+ * 
+ * The main page for managing data connectors. It provides functionality to:
+ * - View a list of connectors with their status and details.
+ * - Filter connectors by search term, type, status, and creation date.
+ * - View real-time statistics about connector statuses.
+ * - Perform actions like approving, rejecting, and deleting connectors.
+ */
+export const ConnectorManagement: React.FC = () => {
+    const navigate = useNavigate();
+    const [connectors, setConnectors] = useState<Connector[]>(mockConnectors);
+    const [filters, setFilters] = useState<ConnectorFiltersType>(initialFilters);
+    const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+    const [selectedConnector, setSelectedConnector] = useState<Connector | null>(null);
+    const [editingConnector, setEditingConnector] = useState<Connector | null>(null);
+
+    // Mock audit logs
+    const mockAuditLogs: AuditLog[] = [
+        {
+            id: '1',
+            action: 'CREATED',
+            user: 'admin@example.com',
+            timestamp: '2023-10-26 10:30:00',
+            details: 'Connector created'
+        },
+        {
+            id: '2',
+            action: 'UPDATED',
+            user: 'admin@example.com',
+            timestamp: '2023-10-26 11:15:00',
+            details: 'Configuration updated'
+        }
+    ];
+
+    // Calculate stats
+    const stats: ConnectorStats = {
+        total: connectors.length,
+        active: connectors.filter(c => c.status === 'APPROVED').length,
+        pendingApproval: connectors.filter(c => c.status === 'INIT').length
+    };
+
+    // Filter connectors
+    const filteredConnectors = connectors.filter(connector => {
+        if (filters.search && !connector.name.toLowerCase().includes(filters.search.toLowerCase())) {
+            return false;
+        }
+        if (filters.type && connector.type !== filters.type) {
+            return false;
+        }
+        if (filters.status && connector.status !== filters.status) {
+            return false;
+        }
+        if (filters.createdDate && connector.createdAt !== filters.createdDate) {
+            return false;
+        }
+        return true;
+    });
+
+    const handleClearFilters = () => {
+        setFilters(initialFilters);
+    };
+
+    const handleView = (id: string) => {
+        const connector = connectors.find(c => c.id === id);
+        if (connector) {
+            setSelectedConnector(connector);
+        }
+    };
+
+    const handleDelete = (id: string) => {
+        setConnectors(prev => prev.filter(c => c.id !== id));
+    };
+
+    const handleApprove = (id: string) => {
+        setConnectors(prev => prev.map(c => c.id === id ? { ...c, status: 'APPROVED' } : c));
+    };
+
+    const handleReject = (id: string) => {
+        setConnectors(prev => prev.map(c => c.id === id ? { ...c, status: 'REJECTED' } : c));
+    };
+
+    const handleCreateConnector = () => {
+        setIsCreateModalOpen(true);
+    };
+
+    const handleCreateSubmit = (data: Omit<Connector, 'id' | 'status' | 'createdAt'>) => {
+        const newConnector: Connector = {
+            id: Math.random().toString(36).substr(2, 9),
+            ...data,
+            status: 'INIT',
+            createdAt: new Date().toISOString().split('T')[0]
+        };
+        setConnectors(prev => [newConnector, ...prev]);
+    };
+
+    const handleEdit = (id: string) => {
+        const connector = connectors.find(c => c.id === id);
+        if (connector) {
+            setEditingConnector(connector);
+            setSelectedConnector(null);
+        }
+    };
+
+    const handleEditSubmit = (id: string, data: Omit<Connector, 'id' | 'status' | 'createdAt'>) => {
+        setConnectors(prev => prev.map(c =>
+            c.id === id ? { ...c, ...data } : c
+        ));
+        <ConnectorFilters
+            filters={filters}
+            onFilterChange={setFilters}
+            onClearFilters={handleClearFilters}
+        />
+        onTestConnection = {(id) => {
+    console.log('Test connection:', id);
+}}
+                />
+            )
+        }
+
+{/* Edit Modal */ }
+{
+    editingConnector && (
+        <EditConnectorModal
+            isOpen={true}
+            connector={editingConnector}
+            onClose={() => setEditingConnector(null)}
+            onSubmit={handleEditSubmit}
+        />
+    )
+}
+        </>
+    );
+};

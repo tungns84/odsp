@@ -1,0 +1,46 @@
+databaseChangeLog:
+  - changeSet:
+      id: 002-add-query-config-column
+      author: antigravity
+      changes:
+        - addColumn:
+            tableName: data_endpoints
+            columns:
+              - column:
+                  name: query_config
+                  type: JSONB
+
+  - changeSet:
+      id: 002-migrate-target-resource-data
+      author: antigravity
+      dbms: postgresql
+      changes:
+        - sql:
+            sql: |
+              -- Case A: target_resource is a simple table name (no spaces)
+              UPDATE data_endpoints
+              SET query_config = jsonb_build_object(
+                  'mode', 'BUILDER',
+                  'rootTable', target_resource,
+                  'columns', '[]'::jsonb,
+                  'filters', '[]'::jsonb,
+                  'sort', '[]'::jsonb
+              )
+              WHERE target_resource NOT LIKE '% %' AND target_resource NOT ILIKE 'SELECT%';
+
+              -- Case B: target_resource is a SQL query
+              UPDATE data_endpoints
+              SET query_config = jsonb_build_object(
+                  'mode', 'SQL',
+                  'sql', target_resource,
+                  'params', '[]'::jsonb
+              )
+              WHERE query_config IS NULL;
+
+  - changeSet:
+      id: 002-drop-target-resource-column
+      author: antigravity
+      changes:
+        - dropColumn:
+            tableName: data_endpoints
+            columnName: target_resource

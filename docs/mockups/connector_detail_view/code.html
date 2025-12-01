@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+
+<html class="dark" lang="en"><head>
+<meta charset="utf-8"/>
+<meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+<title>Connector Details - Data Integration Platform</title>
+<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700;900&amp;display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet"/>
+<style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24
+    }
+  </style>
+<script id="tailwind-config">
+    tailwind.config = {
+      darkMode: "class",
+      theme: {
+        extend: {
+          colors: {
+            "primary": "#137fec",
+            "background-light": "#f6f7f8",
+            "background-dark": "#101922",
+          },
+          fontFamily: {
+            "display": ["Inter", "sans-serif"]
+          },
+          borderRadius: {
+            "DEFAULT": "0.25rem",
+            "lg": "0.5rem",
+            "xl": "0.75rem",
+            "full": "9999px"
+          },
+        },
+      },
+    }
+  </script>
+</head>
+<body class="bg-background-light dark:bg-background-dark font-display">
+<div class="relative flex min-h-screen w-full">
+<!-- SideNavBar -->
+<aside class="flex flex-col w-64 bg-[#111418] border-r border-solid border-[#3b4754]/20 p-4 shrink-0">
+<div class="flex flex-col gap-4 flex-grow">
+<div class="flex gap-3 items-center">
+<div class="bg-center bg-no-repeat aspect-square bg-cover rounded-full size-10" data-alt="User avatar image" style='background-image: url("https://lh3.googleusercontent.com/aida-public/AB6AXuBv7Q4Vo4VigGCFyGDx8GjVzJkHB3VOoLtbSsgfqcF9dMswRZbwI-NdM9kZnEdbQgv7ZNbGNxuL56HDTecbJw89wjxf64MfMMten3hTdfL9FfKgck63KdMvwS2Haky7aujB_LNA8sLJ9nNFSoMs8H61l7CKxZfvAL6F6cytWQd9U-CH8THjTf3xJU3D3eAVUlaVw6mC_S2kHlIw_H-7eAqSj-2RGBJLX3CNFzVVZQsTx9aTZmiz6d8uFRR-EdAoIMBzJAWrZI9DwJM");'></div>
+<div class="flex flex-col">
+<h1 class="text-white text-base font-medium leading-normal">Admin User</h1>
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">admin@dataintegrate.io</p>
+</div>
+</div>
+<nav class="flex flex-col gap-2 mt-4">
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">dashboard</span>
+<p class="text-sm font-medium leading-normal">Dashboard</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 rounded-lg bg-primary text-white" href="#">
+<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">link</span>
+<p class="text-sm font-medium leading-normal">Connectors</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">account_tree</span>
+<p class="text-sm font-medium leading-normal">Pipelines</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">route</span>
+<p class="text-sm font-medium leading-normal">Endpoints</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">monitoring</span>
+<p class="text-sm font-medium leading-normal">Monitoring</p>
+</a>
+</nav>
+</div>
+<div class="flex flex-col gap-1">
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">settings</span>
+<p class="text-sm font-medium leading-normal">Settings</p>
+</a>
+<a class="flex items-center gap-3 px-3 py-2 text-white/70 hover:text-white hover:bg-white/10 rounded-lg" href="#">
+<span class="material-symbols-outlined">help</span>
+<p class="text-sm font-medium leading-normal">Help</p>
+</a>
+</div>
+</aside>
+<!-- Main Content -->
+<main class="flex-1 p-8 overflow-y-auto">
+<div class="max-w-7xl mx-auto flex flex-col gap-6">
+<!-- Breadcrumbs -->
+<div class="flex flex-wrap items-center gap-2">
+<a class="text-[#9dabb9] hover:text-white text-sm font-medium leading-normal" href="#">Home</a>
+<span class="text-[#9dabb9] text-sm font-medium leading-normal">/</span>
+<a class="text-[#9dabb9] hover:text-white text-sm font-medium leading-normal" href="#">Connectors</a>
+<span class="text-[#9dabb9] text-sm font-medium leading-normal">/</span>
+<span class="text-white text-sm font-medium leading-normal">PostgreSQL - Production DB</span>
+</div>
+<!-- Page Heading -->
+<div class="flex flex-wrap justify-between items-center gap-4">
+<div class="flex items-center gap-4">
+<h1 class="text-white text-4xl font-black leading-tight tracking-[-0.033em]">PostgreSQL - Production DB</h1>
+<span class="inline-flex items-center justify-center rounded-full bg-[#faad14]/20 px-3 py-1 text-sm font-medium text-[#faad14]">INIT</span>
+</div>
+<div class="flex items-center gap-3">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Test Connection</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Edit</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#f5222d]/20 hover:bg-[#f5222d]/40 text-[#f5222d] text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Delete</span>
+</button>
+</div>
+</div>
+<!-- Conditional Approve/Reject Buttons -->
+<div class="flex justify-start">
+<div class="flex flex-1 gap-3 flex-wrap">
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#52c41a] hover:bg-green-600 text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Approve</span>
+</button>
+<button class="flex min-w-[84px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-10 px-4 bg-[#283039] hover:bg-[#3b4754] text-white text-sm font-bold leading-normal tracking-[0.015em]">
+<span class="truncate">Reject</span>
+</button>
+</div>
+</div>
+<!-- Details Section -->
+<div class="bg-[#111418] rounded-xl border border-solid border-[#3b4754]/40">
+<h2 class="text-lg font-bold text-white p-4 border-b border-solid border-[#3b4754]/40">Connector Details</h2>
+<div class="p-4 grid grid-cols-1 md:grid-cols-2">
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 pr-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Connector ID</p>
+<p class="text-white text-sm font-normal leading-normal">conn-a1b2c3d4e5</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 md:pl-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Connector Type</p>
+<p class="text-white text-sm font-normal leading-normal">PostgreSQL</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 pr-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Created By</p>
+<p class="text-white text-sm font-normal leading-normal">Admin User</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 md:pl-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Hostname</p>
+<p class="text-white text-sm font-normal leading-normal">prod.db.dataintegrate.io:5432</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 pr-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Created At</p>
+<p class="text-white text-sm font-normal leading-normal">2023-10-27 10:00 AM</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 md:pl-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Database</p>
+<p class="text-white text-sm font-normal leading-normal">production_data</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 pr-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Last Modified</p>
+<p class="text-white text-sm font-normal leading-normal">2023-10-27 10:00 AM</p>
+</div>
+<div class="flex flex-col gap-1 border-t border-solid border-t-[#3b4754]/40 py-4 md:pl-2">
+<p class="text-[#9dabb9] text-sm font-normal leading-normal">Username</p>
+<p class="text-white text-sm font-normal leading-normal">readonly_user</p>
+</div>
+</div>
+</div>
+<!-- History/Audit Log Section -->
+<div class="bg-[#111418] rounded-xl border border-solid border-[#3b4754]/40">
+<h2 class="text-lg font-bold text-white p-4 border-b border-solid border-[#3b4754]/40">History / Audit Log</h2>
+<div class="overflow-x-auto">
+<table class="w-full text-left text-sm text-[#9dabb9]">
+<thead class="bg-[#283039]/50">
+<tr>
+<th class="px-6 py-3 font-medium" scope="col">Action</th>
+<th class="px-6 py-3 font-medium" scope="col">Actor</th>
+<th class="px-6 py-3 font-medium" scope="col">Timestamp</th>
+<th class="px-6 py-3 font-medium" scope="col">Change Details</th>
+</tr>
+</thead>
+<tbody>
+<tr class="border-b border-solid border-[#3b4754]/40">
+<td class="px-6 py-4 text-white">Connection Tested</td>
+<td class="px-6 py-4">Admin User</td>
+<td class="px-6 py-4">2023-10-27 10:05 AM</td>
+<td class="px-6 py-4">Status: <span class="text-green-400">Success</span></td>
+</tr>
+<tr class="border-b border-solid border-[#3b4754]/40">
+<td class="px-6 py-4 text-white">Created</td>
+<td class="px-6 py-4">Admin User</td>
+<td class="px-6 py-4">2023-10-27 10:00 AM</td>
+<td class="px-6 py-4">Initial version created.</td>
+</tr>
+</tbody>
+</table>
+</div>
+</div>
+</div>
+</main>
+</div>
+</body></html>

@@ -1,0 +1,128 @@
+databaseChangeLog:
+  - changeSet:
+      id: 001-create-connectors-table
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: connectors
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: "gen_random_uuid()"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: type
+                  type: VARCHAR(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: config
+                  type: JSONB
+                  constraints:
+                    nullable: false
+              - column:
+                  name: registered_tables
+                  type: JSONB
+              - column:
+                  name: is_active
+                  type: BOOLEAN
+                  defaultValueBoolean: true
+              - column:
+                  name: tenant_id
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: "INIT"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+        - createIndex:
+            tableName: connectors
+            indexName: idx_connectors_tenant
+            columns:
+              - column:
+                  name: tenant_id
+
+  - changeSet:
+      id: 001-create-data-endpoints-table
+      author: antigravity
+      changes:
+        - createTable:
+            tableName: data_endpoints
+            columns:
+              - column:
+                  name: id
+                  type: UUID
+                  defaultValueComputed: "gen_random_uuid()"
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: connector_id
+                  type: UUID
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_data_endpoints_connector
+                    references: connectors(id)
+              - column:
+                  name: path_alias
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+                    unique: true
+              - column:
+                  name: target_resource
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: allowed_methods
+                  type: VARCHAR(255)
+              - column:
+                  name: name
+                  type: VARCHAR(500)
+              - column:
+                  name: is_public
+                  type: BOOLEAN
+                  defaultValueBoolean: false
+              - column:
+                  name: field_config
+                  type: TEXT
+              - column:
+                  name: description
+                  type: TEXT
+              - column:
+                  name: tenant_id
+                  type: VARCHAR(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: VARCHAR(20)
+                  defaultValue: "INIT"
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: TIMESTAMP
+                  defaultValueComputed: "CURRENT_TIMESTAMP"
+        - createIndex:
+            tableName: data_endpoints
+            indexName: idx_data_endpoints_tenant
+            columns:
+              - column:
+                  name: tenant_id
