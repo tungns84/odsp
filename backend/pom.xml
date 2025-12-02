@@ -8,10 +8,10 @@
 		<version>3.5.7</version>
 		<relativePath/> <!-- lookup parent from repository -->
 	</parent>
-	<groupId>com.example</groupId>
-	<artifactId>ldop</artifactId>
+	<groupId>com.gs</groupId>
+	<artifactId>dsp</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
-	<name>ldop</name>
+	<name>dsp</name>
 	<description>Open Data Integration Platform</description>
 	<properties>
 		<java.version>21</java.version>
