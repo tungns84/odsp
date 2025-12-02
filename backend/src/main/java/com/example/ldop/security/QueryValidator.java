@@ -1,5 +1,7 @@
 package com.example.ldop.security;
 
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.ErrorMessages;
 import org.springframework.stereotype.Service;
 
 import java.util.Set;
@@ -52,7 +54,7 @@ public class QueryValidator {
      */
     public void validateIdentifier(String identifier, String identifierType) {
         if (identifier == null || identifier.trim().isEmpty()) {
-            throw new IllegalArgumentException(identifierType + " cannot be null or empty");
+            throw new IllegalArgumentException(String.format(ErrorMessages.IDENTIFIER_NULL, identifierType));
         }
 
         String trimmed = identifier.trim();
@@ -60,22 +62,21 @@ public class QueryValidator {
         // Check against valid pattern
         if (!VALID_IDENTIFIER_PATTERN.matcher(trimmed).matches()) {
             throw new IllegalArgumentException(
-                String.format("Invalid %s: '%s'. Only alphanumeric characters and underscores are allowed.", 
-                    identifierType, identifier)
+                String.format(ErrorMessages.INVALID_IDENTIFIER, identifierType, identifier)
             );
         }
 
         // Check if it's a SQL keyword
         if (SQL_KEYWORDS.contains(trimmed.toUpperCase())) {
             throw new IllegalArgumentException(
-                String.format("Invalid %s: '%s' is a reserved SQL keyword", identifierType, identifier)
+                String.format(ErrorMessages.RESERVED_KEYWORD, identifierType, identifier)
             );
         }
 
         // Check max length (prevent DOS via very long names)
-        if (trimmed.length() > 128) {
+        if (trimmed.length() > AppConstants.MAX_IDENTIFIER_LENGTH) {
             throw new IllegalArgumentException(
-                String.format("%s is too long (max 128 characters)", identifierType)
+                String.format(ErrorMessages.IDENTIFIER_TOO_LONG, identifierType)
             );
         }
     }
@@ -135,14 +136,14 @@ public class QueryValidator {
 
         if (containsSqlInjectionPattern(input)) {
             throw new IllegalArgumentException(
-                String.format("Potential SQL injection detected in %s", fieldName)
+                String.format(ErrorMessages.SQL_INJECTION_DETECTED, fieldName)
             );
         }
 
         // Check for excessive length (DOS prevention)
-        if (input.length() > 10000) {
+        if (input.length() > AppConstants.MAX_INPUT_LENGTH) {
             throw new IllegalArgumentException(
-                String.format("%s exceeds maximum length", fieldName)
+                String.format(ErrorMessages.EXCEEDS_MAX_LENGTH, fieldName)
             );
         }
     }
@@ -160,7 +161,7 @@ public class QueryValidator {
         
         if (!allowedTables.contains(tableName)) {
             throw new IllegalArgumentException(
-                String.format("Table '%s' is not registered for this connector", tableName)
+                String.format(ErrorMessages.TABLE_NOT_REGISTERED, tableName)
             );
         }
     }
@@ -177,7 +178,7 @@ public class QueryValidator {
         
         if (!allowedColumns.contains(columnName)) {
             throw new IllegalArgumentException(
-                String.format("Column '%s' is not available in the selected table", columnName)
+                String.format(ErrorMessages.COLUMN_NOT_AVAILABLE, columnName)
             );
         }
     }
@@ -221,7 +222,7 @@ public class QueryValidator {
         String[] parts = trimmed.split("\\s+");
         
         if (parts.length == 0 || parts.length > 2) {
-            throw new IllegalArgumentException("Invalid ORDER BY clause format");
+            throw new IllegalArgumentException(ErrorMessages.INVALID_ORDER_BY);
         }
 
         // Validate column name
@@ -231,8 +232,8 @@ public class QueryValidator {
         // Validate direction if present
         if (parts.length == 2) {
             String direction = parts[1].toUpperCase();
-            if (!direction.equals("ASC") && !direction.equals("DESC")) {
-                throw new IllegalArgumentException("ORDER BY direction must be ASC or DESC");
+            if (!direction.equals(AppConstants.SORT_ASC) && !direction.equals(AppConstants.SORT_DESC)) {
+                throw new IllegalArgumentException(ErrorMessages.INVALID_ORDER_DIRECTION);
             }
         }
     }

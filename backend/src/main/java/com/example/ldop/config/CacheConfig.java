@@ -1,5 +1,6 @@
 package com.example.ldop.config;
 
+import com.example.ldop.constant.AppConstants;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.context.annotation.Bean;
@@ -24,7 +25,7 @@ public class CacheConfig {
     public Cache<String, com.example.ldop.domain.DataEndpoint> dataEndpointMetadataCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1000)
-                .expireAfterWrite(10, TimeUnit.MINUTES)
+                .expireAfterWrite(AppConstants.CACHE_TTL_MINUTES, TimeUnit.MINUTES)
                 .recordStats() // Enable statistics for monitoring
                 .build();
     }

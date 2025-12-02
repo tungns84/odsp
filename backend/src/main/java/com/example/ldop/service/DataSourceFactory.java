@@ -1,5 +1,8 @@
 package com.example.ldop.service;
 
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.ErrorMessages;
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.domain.Connector;
 import com.example.ldop.util.EncryptionUtil;
 import com.fasterxml.jackson.databind.JsonNode;
@@ -29,42 +32,42 @@ public class DataSourceFactory {
             HikariConfig hikariConfig = new HikariConfig();
             
             // Check if custom URL is provided (e.g., for H2 in tests)
-            if (config.containsKey("url")) {
-                String jdbcUrl = (String) config.get("url");
+            if (config.containsKey(FieldNames.CONFIG_URL)) {
+                String jdbcUrl = (String) config.get(FieldNames.CONFIG_URL);
                 hikariConfig.setJdbcUrl(jdbcUrl);
             } else {
                 // Construct JDBC URL for PostgreSQL
-                String host = (String) config.get("host");
-                Integer port = config.get("port") instanceof Integer ? (Integer) config.get("port") : Integer.parseInt(config.get("port").toString());
-                String databaseName = (String) config.get("databaseName");
+                String host = (String) config.get(FieldNames.CONFIG_HOST);
+                Integer port = config.get(FieldNames.CONFIG_PORT) instanceof Integer ? (Integer) config.get(FieldNames.CONFIG_PORT) : Integer.parseInt(config.get(FieldNames.CONFIG_PORT).toString());
+                String databaseName = (String) config.get(FieldNames.CONFIG_DATABASE_NAME);
                 
                 String jdbcUrl = String.format("jdbc:postgresql://%s:%d/%s", host, port, databaseName);
                 hikariConfig.setJdbcUrl(jdbcUrl);
             }
 
             // Handle username - support both "user" and "username" keys
-            String username = config.containsKey("user") ? (String) config.get("user") : (String) config.get("username");
+            String username = config.containsKey(FieldNames.CONFIG_USER) ? (String) config.get(FieldNames.CONFIG_USER) : (String) config.get(FieldNames.CONFIG_USERNAME);
             hikariConfig.setUsername(username);
             
             // Handle password (check for encrypted_password first, then password)
             String password;
-            if (config.containsKey("encrypted_password")) {
-                password = encryptionUtil.decrypt((String) config.get("encrypted_password"));
+            if (config.containsKey(FieldNames.CONFIG_ENCRYPTED_PASSWORD)) {
+                password = encryptionUtil.decrypt((String) config.get(FieldNames.CONFIG_ENCRYPTED_PASSWORD));
             } else {
-                password = (String) config.get("password");
+                password = (String) config.get(FieldNames.CONFIG_PASSWORD);
             }
             hikariConfig.setPassword(password);
             
-            if (config.containsKey("driver_class")) {
-                hikariConfig.setDriverClassName((String) config.get("driver_class"));
+            if (config.containsKey(FieldNames.CONFIG_DRIVER_CLASS)) {
+                hikariConfig.setDriverClassName((String) config.get(FieldNames.CONFIG_DRIVER_CLASS));
             }
 
             hikariConfig.setPoolName("HikariPool-" + connector.getName());
-            hikariConfig.setMaximumPoolSize(10); // Default limit
+            hikariConfig.setMaximumPoolSize(AppConstants.DEFAULT_POOL_SIZE); // Default limit
 
             return new HikariDataSource(hikariConfig);
         } catch (Exception e) {
-            throw new RuntimeException("Failed to create DataSource for connector: " + connector.getName(), e);
+            throw new RuntimeException(String.format(ErrorMessages.FAILED_TO_CREATE_DATASOURCE, connector.getName()), e);
         }
     }
 }

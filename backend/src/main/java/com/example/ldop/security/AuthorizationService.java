@@ -1,6 +1,8 @@
 package com.example.ldop.security;
 
 import com.example.ldop.config.TenantContext;
+import com.example.ldop.constant.ErrorMessages;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.UUID;
@@ -9,6 +11,7 @@ import java.util.UUID;
  * Service to prevent IDOR (Insecure Direct Object Reference) attacks
  * Ensures users can only access resources they own or have permission to access
  */
+@Slf4j
 @Service
 public class AuthorizationService {
 
@@ -24,25 +27,22 @@ public class AuthorizationService {
         String currentTenantId = TenantContext.getTenantId();
         
         if (currentTenantId == null) {
-            throw new SecurityException("No tenant context available");
+            throw new SecurityException(ErrorMessages.NO_TENANT_CONTEXT);
         }
         
         if (resourceTenantId == null) {
             throw new SecurityException(
-                String.format("%s has no tenant association", resourceType)
+                String.format(ErrorMessages.NO_TENANT_ASSOCIATION, resourceType)
             );
         }
         
         if (!currentTenantId.equals(resourceTenantId)) {
             // Log potential IDOR attempt
-            System.err.println(String.format(
-                "SECURITY: IDOR attempt detected! " +
-                "Tenant %s tried to access %s belonging to tenant %s",
-                currentTenantId, resourceType, resourceTenantId
-            ));
+            log.warn("IDOR attempt detected: tenant={} tried to access {}={}",
+                currentTenantId, resourceType, resourceTenantId);
             
             throw new SecurityException(
-                String.format("Access denied: %s not found", resourceType)
+                String.format(ErrorMessages.ACCESS_DENIED_RESOURCE_NOT_FOUND, resourceType)
             );
         }
     }
@@ -58,7 +58,7 @@ public class AuthorizationService {
     public UUID validateAndParseUuid(String id, String resourceType) {
         if (id == null || id.trim().isEmpty()) {
             throw new IllegalArgumentException(
-                String.format("%s ID cannot be null or empty", resourceType)
+                String.format(ErrorMessages.ID_NULL_OR_EMPTY, resourceType)
             );
         }
 
@@ -66,13 +66,10 @@ public class AuthorizationService {
             return UUID.fromString(id);
         } catch (IllegalArgumentException e) {
             // Log potential enumeration attempt
-            System.err.println(String.format(
-                "SECURITY: Invalid UUID format detected for %s: %s",
-                resourceType, id
-            ));
+            log.warn("Invalid UUID format for {}: {}", resourceType, id);
             
             throw new IllegalArgumentException(
-                String.format("Invalid %s ID format", resourceType)
+                String.format(ErrorMessages.INVALID_ID_FORMAT, resourceType)
             );
         }
     }
@@ -139,7 +136,7 @@ public class AuthorizationService {
     public <T> T validateResourceOwnership(T resource, String resourceType, String tenantId) {
         if (resource == null) {
             throw new SecurityException(
-                String.format("%s not found", resourceType)
+                String.format(ErrorMessages.RESOURCE_NOT_FOUND, resourceType)
             );
         }
         

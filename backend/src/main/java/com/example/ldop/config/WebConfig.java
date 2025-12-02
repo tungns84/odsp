@@ -1,5 +1,6 @@
 package com.example.ldop.config;
 
+import com.example.ldop.constant.AppConstants;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.CorsRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
@@ -23,9 +24,9 @@ public class WebConfig implements WebMvcConfigurer {
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/api/**")
                 .allowedOrigins("http://localhost:5176", "http://localhost:5177", "http://localhost:3000", "http://localhost:5173")
-                .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
+                .allowedMethods(AppConstants.METHOD_GET, AppConstants.METHOD_POST, AppConstants.METHOD_PUT, AppConstants.METHOD_DELETE, AppConstants.METHOD_OPTIONS)
                 .allowedHeaders("*")
-                .exposedHeaders("X-Tenant-ID")
+                .exposedHeaders(AppConstants.HEADER_TENANT_ID)
                 .allowCredentials(true);
     }
 }

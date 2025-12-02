@@ -1,5 +1,6 @@
 package com.example.ldop.domain;
 
+import com.example.ldop.constant.AppConstants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -36,7 +37,7 @@ public class Tenant {
     @NotBlank(message = "Status is required")
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private String status = "ACTIVE"; // ACTIVE, INACTIVE
+    private String status = AppConstants.STATUS_ACTIVE; // ACTIVE, INACTIVE
 
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)

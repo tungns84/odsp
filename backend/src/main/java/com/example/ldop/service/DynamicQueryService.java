@@ -1,5 +1,7 @@
 package com.example.ldop.service;
 
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.domain.DataEndpoint;
 import com.example.ldop.repository.DataEndpointRepository;
 import org.jdbi.v3.core.Jdbi;
@@ -107,8 +109,8 @@ public class DynamicQueryService {
         Jdbi jdbi = Jdbi.create(dataSource);
 
         // Force limit for test query
-        if (queryDef.getLimit() == null || queryDef.getLimit() > 100) {
-            queryDef.setLimit(10);
+        if (queryDef.getLimit() == null || queryDef.getLimit() > AppConstants.DEFAULT_QUERY_LIMIT) {
+            queryDef.setLimit(AppConstants.DEFAULT_PAGE_SIZE);
         }
 
         // Get schema from connector config
@@ -139,7 +141,7 @@ public class DynamicQueryService {
             } else {
                 // For test query, ensure limit
                 if (!sql.toUpperCase().contains("LIMIT")) {
-                     return sql + " LIMIT " + (queryDef.getLimit() != null ? queryDef.getLimit() : 10);
+                     return sql + " LIMIT " + (queryDef.getLimit() != null ? queryDef.getLimit() : AppConstants.DEFAULT_PAGE_SIZE);
                 }
                 return sql;
             }
@@ -184,7 +186,7 @@ public class DynamicQueryService {
                 
                 // Validate join type
                 String joinType = join.getType().toUpperCase();
-                if (!Set.of("INNER", "LEFT", "RIGHT", "FULL", "CROSS").contains(joinType)) {
+                if (!Set.of(AppConstants.JOIN_INNER, AppConstants.JOIN_LEFT, AppConstants.JOIN_RIGHT, AppConstants.JOIN_FULL, AppConstants.JOIN_CROSS).contains(joinType)) {
                     throw new IllegalArgumentException("Invalid join type: " + join.getType());
                 }
                 
@@ -207,7 +209,7 @@ public class DynamicQueryService {
                     // SECURITY: Validate sort field and direction
                     queryValidator.validateColumnName(s.getField());
                     String direction = s.getDirection().toUpperCase();
-                    if (!direction.equals("ASC") && !direction.equals("DESC")) {
+                    if (!direction.equals(AppConstants.SORT_ASC) && !direction.equals(AppConstants.SORT_DESC)) {
                         throw new IllegalArgumentException("Sort direction must be ASC or DESC");
                     }
                     return s.getField() + " " + direction;
@@ -245,14 +247,14 @@ public class DynamicQueryService {
                 
                 // Validate operator
                 switch (op) {
-                    case "EQ": return f.getField() + " = " + val;
-                    case "NEQ": return f.getField() + " != " + val;
-                    case "GT": return f.getField() + " > " + val;
-                    case "LT": return f.getField() + " < " + val;
-                    case "GTE": return f.getField() + " >= " + val;
-                    case "LTE": return f.getField() + " <= " + val;
-                    case "LIKE": return f.getField() + " LIKE " + val;
-                    case "IN": 
+                    case AppConstants.OP_EQ: return f.getField() + " = " + val;
+                    case AppConstants.OP_NEQ: return f.getField() + " != " + val;
+                    case AppConstants.OP_GT: return f.getField() + " > " + val;
+                    case AppConstants.OP_LT: return f.getField() + " < " + val;
+                    case AppConstants.OP_GTE: return f.getField() + " >= " + val;
+                    case AppConstants.OP_LTE: return f.getField() + " <= " + val;
+                    case AppConstants.OP_LIKE: return f.getField() + " LIKE " + val;
+                    case AppConstants.OP_IN: 
                         // IN operator needs special handling - validate each value
                         String inValues = sanitizedValue;
                         queryValidator.validateUserInput(inValues, "IN clause values");
@@ -269,14 +271,14 @@ public class DynamicQueryService {
      * Defaults to 'public' if not specified
      */
     private String getSchemaFromConfig(Map<String, Object> config) {
-        if (config != null && config.containsKey("schema")) {
-            Object schema = config.get("schema");
+        if (config != null && config.containsKey(FieldNames.SCHEMA)) {
+            Object schema = config.get(FieldNames.SCHEMA);
             if (schema instanceof String) {
                 String schemaStr = ((String) schema).trim();
-                return schemaStr.isEmpty() ? "public" : schemaStr;
+                return schemaStr.isEmpty() ? FieldNames.DEFAULT_SCHEMA : schemaStr;
             }
         }
-        return "public"; // Default PostgreSQL schema
+        return FieldNames.DEFAULT_SCHEMA; // Default PostgreSQL schema
     }
 
     /**
@@ -332,13 +334,13 @@ public class DynamicQueryService {
 
     private String maskValue(String value, MaskingConfig config) {
         if (value == null) return null;
-        if ("FIXED".equalsIgnoreCase(config.getType())) {
+        if (AppConstants.MASKING_TYPE_FIXED.equalsIgnoreCase(config.getType())) {
             return config.getReplacement() != null ? config.getReplacement() : "*****";
-        } else if ("REGEX".equalsIgnoreCase(config.getType())) {
+        } else if (AppConstants.MASKING_TYPE_REGEX.equalsIgnoreCase(config.getType())) {
             if (config.getPattern() != null && config.getReplacement() != null) {
                 return value.replaceAll(config.getPattern(), config.getReplacement());
             }
-        } else if ("PARTIAL".equalsIgnoreCase(config.getType())) {
+        } else if (AppConstants.MASKING_TYPE_PARTIAL.equalsIgnoreCase(config.getType())) {
             String pattern = config.getPattern();
             if (pattern == null || pattern.isBlank()) {
                  return "*****";

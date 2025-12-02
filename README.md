@@ -1,4 +1,4 @@
-# Open Data Integration Platform
+# Open Data Sharing Platform
 
 A centralized web platform to integrate, query, and share data from multiple dynamic sources.
 

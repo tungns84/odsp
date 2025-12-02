@@ -1,6 +1,9 @@
 package com.example.ldop.controller;
 
 import com.example.ldop.config.TenantContext;
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.ErrorMessages;
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.domain.Connector;
 import com.example.ldop.domain.DataEndpoint;
 import com.example.ldop.repository.ConnectorRepository;
@@ -65,12 +68,12 @@ public class DataEndpointController {
             Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
 
             if (connectorIdStr == null || queryConfigMap == null) {
-                return ResponseEntity.badRequest().body(Map.of("error", "Missing required fields"));
+                return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, ErrorMessages.MISSING_REQUIRED_FIELDS));
             }
 
             UUID connectorId = UUID.fromString(connectorIdStr);
             Connector connector = connectorRepository.findByIdAndTenantId(connectorId, TenantContext.getTenantId())
-                    .orElseThrow(() -> new RuntimeException("Connector not found"));
+                    .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
 
             // Convert map to QueryDefinition
             ObjectMapper mapper = new ObjectMapper();
@@ -88,13 +91,13 @@ public class DataEndpointController {
             List<String> columns = rows.isEmpty() ? List.of() : List.copyOf(rows.get(0).keySet());
 
             return ResponseEntity.ok(Map.of(
-                    "columns", columns,
-                    "rows", rows,
-                    "rowCount", rows.size(),
-                    "generatedSql", result.getSql()
+                    FieldNames.COLUMNS, columns,
+                    FieldNames.ROWS, rows,
+                    FieldNames.ROW_COUNT, rows.size(),
+                    FieldNames.GENERATED_SQL, result.getSql()
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, e.getMessage()));
         }
     }
 
@@ -115,7 +118,7 @@ public class DataEndpointController {
 
             UUID connectorId = UUID.fromString(connectorIdStr);
             Connector connector = connectorRepository.findByIdAndTenantId(connectorId, TenantContext.getTenantId())
-                    .orElseThrow(() -> new RuntimeException("Connector not found"));
+                    .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
 
             // Serialize queryConfig to JSON string
             ObjectMapper mapper = new ObjectMapper();
@@ -140,12 +143,12 @@ public class DataEndpointController {
                         masking.put("enabled", true);
                         
                         String type = config.get("type");
-                        if ("MASK_ALL".equals(type)) {
-                            masking.put("type", "FIXED");
-                            masking.put("replacement", "*****");
-                        } else if ("PARTIAL".equals(type)) {
-                            masking.put("type", "PARTIAL"); // Custom type for backend to handle
-                            masking.put("pattern", config.get("pattern"));
+                        if (FieldNames.MASK_ALL.equals(type)) {
+                            masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_FIXED);
+                            masking.put(FieldNames.REPLACEMENT, "*****");
+                        } else if (AppConstants.MASKING_TYPE_PARTIAL.equals(type)) {
+                            masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_PARTIAL); // Custom type for backend to handle
+                            masking.put(FieldNames.PATTERN, config.get(FieldNames.PATTERN));
                         }
                         
                         fieldDef.put("masking", masking);
@@ -167,8 +170,8 @@ public class DataEndpointController {
                     .fieldConfig(fieldConfig)
                     .tenantId(TenantContext.getTenantId())
                     .isPublic(false)
-                    .allowedMethods("GET")
-                    .status("ACTIVE")
+                    .allowedMethods(AppConstants.METHOD_GET)
+                    .status(AppConstants.STATUS_ACTIVE)
                     .build();
 
             DataEndpoint saved = dataEndpointRepository.save(endpoint);
@@ -209,7 +212,7 @@ public class DataEndpointController {
                             ObjectMapper mapper = new ObjectMapper();
                             endpoint.setQueryConfig(mapper.writeValueAsString(queryConfigMap));
                         } catch (Exception e) {
-                            throw new RuntimeException("Failed to serialize queryConfig", e);
+                            throw new RuntimeException(String.format(ErrorMessages.FAILED_TO_SERIALIZE, FieldNames.QUERY_CONFIG), e);
                         }
                     }
 
@@ -227,9 +230,9 @@ public class DataEndpointController {
                 .map(endpoint -> {
                     String status = statusUpdate.get("status");
                     // For now, we'll use isPublic as a proxy for ACTIVE/INACTIVE
-                    if ("ACTIVE".equals(status)) {
+                    if (AppConstants.STATUS_ACTIVE.equals(status)) {
                         endpoint.setPublic(true);
-                    } else if ("INACTIVE".equals(status)) {
+                    } else if (AppConstants.STATUS_INACTIVE.equals(status)) {
                         endpoint.setPublic(false);
                     }
                     return ResponseEntity.ok(dataEndpointRepository.save(endpoint));

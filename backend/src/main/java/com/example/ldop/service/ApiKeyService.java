@@ -1,5 +1,6 @@
 package com.example.ldop.service;
 
+import com.example.ldop.constant.AppConstants;
 import com.example.ldop.domain.ApiKey;
 import com.example.ldop.repository.ApiKeyRepository;
 import lombok.RequiredArgsConstructor;
@@ -45,7 +46,7 @@ public class ApiKeyService {
                 .name(name)
                 .keyHash(keyHash)
                 .prefix(PREFIX)
-                .status("ACTIVE")
+                .status(AppConstants.STATUS_ACTIVE)
                 .expiresAt(expiresAt)
                 .build();
 
@@ -71,7 +72,7 @@ public class ApiKeyService {
             UUID id = asUuid(Base64.getUrlDecoder().decode(idPart));
 
             return apiKeyRepository.findById(id)
-                    .filter(apiKey -> "ACTIVE".equals(apiKey.getStatus()))
+                    .filter(apiKey -> AppConstants.STATUS_ACTIVE.equals(apiKey.getStatus()))
                     .filter(apiKey -> apiKey.getExpiresAt() == null || apiKey.getExpiresAt().isAfter(LocalDateTime.now()))
                     .filter(apiKey -> passwordEncoder.matches(rawKey, apiKey.getKeyHash()))
                     .map(apiKey -> {
@@ -89,7 +90,7 @@ public class ApiKeyService {
     @Transactional
     public void revokeApiKey(UUID id) {
         apiKeyRepository.findById(id).ifPresent(apiKey -> {
-            apiKey.setStatus("REVOKED");
+            apiKey.setStatus(AppConstants.STATUS_REVOKED);
             apiKeyRepository.save(apiKey);
         });
     }

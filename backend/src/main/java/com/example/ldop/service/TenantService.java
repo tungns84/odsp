@@ -1,5 +1,6 @@
 package com.example.ldop.service;
 
+import com.example.ldop.constant.ErrorMessages;
 import com.example.ldop.domain.Tenant;
 import com.example.ldop.repository.TenantRepository;
 import lombok.RequiredArgsConstructor;
@@ -26,7 +27,9 @@ public class TenantService {
     @Transactional
     public Tenant createTenant(Tenant tenant) {
         if (tenantRepository.existsById(tenant.getId())) {
-            throw new IllegalArgumentException("Tenant with ID " + tenant.getId() + " already exists");
+            throw new IllegalArgumentException(
+                String.format(ErrorMessages.ALREADY_EXISTS, "Tenant", tenant.getId())
+            );
         }
         return tenantRepository.save(tenant);
     }
@@ -34,7 +37,9 @@ public class TenantService {
     @Transactional
     public Tenant updateTenant(String id, Tenant tenantDetails) {
         Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + id));
+                .orElseThrow(() -> new IllegalArgumentException(
+                    String.format(ErrorMessages.TENANT_NOT_FOUND_WITH_ID, id)
+                ));
         
         tenant.setName(tenantDetails.getName());
         tenant.setDescription(tenantDetails.getDescription());
@@ -46,7 +51,9 @@ public class TenantService {
     @Transactional
     public void deleteTenant(String id) {
         if (!tenantRepository.existsById(id)) {
-            throw new IllegalArgumentException("Tenant not found with ID: " + id);
+            throw new IllegalArgumentException(
+                String.format(ErrorMessages.TENANT_NOT_FOUND_WITH_ID, id)
+            );
         }
         tenantRepository.deleteById(id);
     }
@@ -58,7 +65,9 @@ public class TenantService {
     @Transactional
     public Tenant updateTenantStatus(String id, String status) {
         Tenant tenant = tenantRepository.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException("Tenant not found with ID: " + id));
+                .orElseThrow(() -> new IllegalArgumentException(
+                    String.format(ErrorMessages.TENANT_NOT_FOUND_WITH_ID, id)
+                ));
         
         tenant.setStatus(status);
         return tenantRepository.save(tenant);

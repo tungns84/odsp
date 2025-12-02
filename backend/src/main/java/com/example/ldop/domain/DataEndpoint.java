@@ -1,5 +1,6 @@
 package com.example.ldop.domain;
 
+import com.example.ldop.constant.AppConstants;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;
 import org.hibernate.annotations.JdbcTypeCode;
@@ -43,13 +44,13 @@ public class DataEndpoint {
     private String queryConfig; // JSON structure of QueryDefinition
 
     @Column(name = "allowed_methods")
-    private String allowedMethods = "GET";
+    private String allowedMethods = AppConstants.METHOD_GET;
 
     @Column(name = "is_public")
     private boolean isPublic = false;
 
     @Column(name = "status")
-    private String status = "ACTIVE"; // ACTIVE or INACTIVE
+    private String status = AppConstants.STATUS_ACTIVE; // ACTIVE or INACTIVE
 
     @Column(name = "tenant_id", nullable = false)
     private String tenantId;
@@ -66,7 +67,7 @@ public class DataEndpoint {
             createdAt = LocalDateTime.now();
         }
         if (status == null) {
-            status = "ACTIVE";
+            status = AppConstants.STATUS_ACTIVE;
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.ldop.service;
 
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.domain.Connector;
 import com.example.ldop.dto.MetadataVisibility;
 import org.jdbi.v3.core.Jdbi;
@@ -36,7 +37,7 @@ public class ConnectorService {
         DataSource dataSource = dataSourceFactory.createDataSource(tempConnector);
         Jdbi jdbi = Jdbi.create(dataSource);
 
-        String schema = (String) config.getOrDefault("schema", "public");
+        String schema = (String) config.getOrDefault(FieldNames.SCHEMA, FieldNames.DEFAULT_SCHEMA);
 
         try {
             // Enhanced SQL to fetch tables, columns, primary keys, and foreign keys
@@ -78,7 +79,7 @@ public class ConnectorService {
 
             return jdbi.withHandle(handle -> {
                 List<Map<String, Object>> rows = handle.createQuery(sql)
-                        .bind("schema", schema)
+                        .bind(FieldNames.SCHEMA, schema)
                         .mapToMap()
                         .list();
 

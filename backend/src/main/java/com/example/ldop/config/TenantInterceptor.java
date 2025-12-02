@@ -1,5 +1,7 @@
 package com.example.ldop.config;
 
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.ErrorMessages;
 import com.example.ldop.service.ApiKeyService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
@@ -11,14 +13,14 @@ import org.springframework.web.servlet.HandlerInterceptor;
 @RequiredArgsConstructor
 public class TenantInterceptor implements HandlerInterceptor {
 
-    private static final String TENANT_HEADER = "X-Tenant-ID";
-    private static final String API_KEY_HEADER = "X-API-Key";
+    private static final String TENANT_HEADER = AppConstants.HEADER_TENANT_ID;
+    private static final String API_KEY_HEADER = AppConstants.HEADER_API_KEY;
 
     private final ApiKeyService apiKeyService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
-        if ("OPTIONS".equalsIgnoreCase(request.getMethod())) {
+        if (AppConstants.METHOD_OPTIONS.equalsIgnoreCase(request.getMethod())) {
             return true;
         }
 
@@ -33,7 +35,7 @@ public class TenantInterceptor implements HandlerInterceptor {
                     .orElseGet(() -> {
                         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
                         try {
-                            response.getWriter().write("Invalid API Key");
+                            response.getWriter().write(ErrorMessages.INVALID_API_KEY);
                         } catch (Exception e) {
                             // ignore
                         }
@@ -45,7 +47,7 @@ public class TenantInterceptor implements HandlerInterceptor {
         String tenantId = request.getHeader(TENANT_HEADER);
         if (tenantId == null || tenantId.isBlank()) {
             response.setStatus(HttpServletResponse.SC_BAD_REQUEST);
-            response.getWriter().write("Missing X-Tenant-ID or X-API-Key header");
+            response.getWriter().write(ErrorMessages.MISSING_HEADERS);
             return false;
         }
         TenantContext.setTenantId(tenantId);

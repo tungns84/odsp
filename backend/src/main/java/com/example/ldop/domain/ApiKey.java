@@ -1,5 +1,6 @@
 package com.example.ldop.domain;
 
+import com.example.ldop.constant.AppConstants;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
@@ -47,7 +48,7 @@ public class ApiKey implements org.springframework.data.domain.Persistable<UUID>
     @NotBlank(message = "Status is required")
     @Column(nullable = false, length = 20)
     @Builder.Default
-    private String status = "ACTIVE"; // ACTIVE, REVOKED, EXPIRED
+    private String status = AppConstants.STATUS_ACTIVE; // ACTIVE, REVOKED, EXPIRED
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;

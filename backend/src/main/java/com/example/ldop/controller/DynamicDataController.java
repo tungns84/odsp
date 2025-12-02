@@ -1,5 +1,7 @@
 package com.example.ldop.controller;
 
+import com.example.ldop.constant.AppConstants;
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.service.DynamicQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -31,7 +33,7 @@ public class DynamicDataController {
                     "data", result
             ));
         } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of("error", e.getMessage()));
+            return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, e.getMessage()));
         }
     }
 }

@@ -1,5 +1,6 @@
 package com.example.ldop.controller;
 
+import com.example.ldop.constant.ErrorMessages;
 import com.example.ldop.domain.ApiKey;
 import com.example.ldop.dto.ApiKeyDTO;
 import com.example.ldop.service.ApiKeyService;
@@ -55,7 +56,7 @@ public class ApiKeyController {
         ApiKey createdKey = keys.stream()
                 .filter(k -> k.getName().equals(request.getName()))
                 .findFirst()
-                .orElseThrow(() -> new IllegalStateException("Failed to retrieve created API key"));
+                .orElseThrow(() -> new IllegalStateException(String.format(ErrorMessages.FAILED_TO_RETRIEVE, "API key")));
         
         ApiKeyDTO.ApiKeyCreationResponse response = ApiKeyDTO.ApiKeyCreationResponse.builder()
                 .id(createdKey.getId())

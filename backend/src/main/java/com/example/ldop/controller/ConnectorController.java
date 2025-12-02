@@ -1,6 +1,7 @@
 package com.example.ldop.controller;
 
 import com.example.ldop.config.TenantContext;
+import com.example.ldop.constant.FieldNames;
 import com.example.ldop.domain.Connector;
 import com.example.ldop.repository.ConnectorRepository;
 import org.springframework.http.ResponseEntity;
@@ -89,7 +90,7 @@ public class ConnectorController {
                     // SECURITY: Validate tenant access
                     authorizationService.validateTenantAccess(connector.getTenantId(), "Connector");
                     
-                    String statusStr = statusUpdate.get("status");
+                    String statusStr = statusUpdate.get(FieldNames.STATUS);
                     if (statusStr != null) {
                         try {
                             com.example.ldop.domain.ConnectorStatus newStatus = com.example.ldop.domain.ConnectorStatus.valueOf(statusStr);

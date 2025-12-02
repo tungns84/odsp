@@ -1,5 +1,6 @@
 package com.example.ldop.controller;
 
+import com.example.ldop.constant.AppConstants;
 import com.example.ldop.domain.Tenant;
 import com.example.ldop.dto.TenantDTO;
 import com.example.ldop.service.TenantService;
@@ -57,7 +58,7 @@ public class TenantController {
                 .id(request.getId())
                 .name(request.getName())
                 .description(request.getDescription())
-                .status("ACTIVE")
+                .status(AppConstants.STATUS_ACTIVE)
                 .build();
         
         Tenant created = tenantService.createTenant(tenant);
