@@ -2,10 +2,12 @@ package com.gs.dsp.service;
 
 import com.gs.dsp.dto.ColumnMetadata;
 import com.gs.dsp.dto.TableMetadata;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.util.HashMap;
 import java.util.List;
@@ -15,14 +17,19 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Integration test for ConnectorService using real PostgreSQL database
- * Note: This test requires a running PostgreSQL instance with credentials from application.properties
+ * Note: This test requires a running PostgreSQL instance with real credentials
+ * These tests are disabled by default - enable them manually for integration testing
  */
+@Disabled("Requires real PostgreSQL instance - enable manually for integration testing")
 @SpringBootTest
 @ActiveProfiles("default") // Use default profile to connect to real PostgreSQL
 public class ConnectorServiceIntegrationTest {
 
     @Autowired
     private ConnectorService connectorService;
+
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
     @Test
     void testConnectionAndFetchTables_ShouldReturnMetadata() {

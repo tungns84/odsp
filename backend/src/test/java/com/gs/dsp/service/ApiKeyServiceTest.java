@@ -1,7 +1,8 @@
 package com.gs.dsp.service;
 
-import com.gs.dsp.domain.ApiKey;
-import com.gs.dsp.repository.ApiKeyRepository;
+import com.gs.dsp.iam.domain.model.ApiKey;
+import com.gs.dsp.iam.domain.model.TenantId;
+import com.gs.dsp.iam.domain.repository.ApiKeyRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -36,7 +37,7 @@ class ApiKeyServiceTest {
         apiKeyId = UUID.randomUUID();
         apiKey = ApiKey.builder()
                 .id(apiKeyId)
-                .tenantId("test-tenant")
+                .tenantId(new TenantId("test-tenant"))
                 .name("Test Key")
                 .keyHash("hashed-key")
                 .prefix("ldop_sk_")
@@ -57,14 +58,14 @@ class ApiKeyServiceTest {
 
     @Test
     void getApiKeysByTenant_ShouldReturnList() {
-        when(apiKeyRepository.findByTenantId("test-tenant")).thenReturn(Arrays.asList(apiKey));
+        when(apiKeyRepository.findByTenantId(new TenantId("test-tenant"))).thenReturn(Arrays.asList(apiKey));
 
         List<ApiKey> result = apiKeyService.getApiKeysByTenant("test-tenant");
 
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("test-tenant", result.get(0).getTenantId());
-        verify(apiKeyRepository).findByTenantId("test-tenant");
+        assertEquals("test-tenant", result.get(0).getTenantId().toString());
+        verify(apiKeyRepository).findByTenantId(new TenantId("test-tenant"));
     }
 
     @Test

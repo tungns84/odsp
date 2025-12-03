@@ -46,4 +46,9 @@ public interface ConnectorRepository {
      * Find all connectors.
      */
     List<Connector> findAll();
+
+    /**
+     * Delete all connectors.
+     */
+    void deleteAll();
 }

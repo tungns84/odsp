@@ -1,5 +1,6 @@
 package com.gs.dsp.domain;
 
+import com.gs.dsp.connectivity.domain.model.Connector;
 import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.*;

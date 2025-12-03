@@ -2,6 +2,9 @@ package com.gs.dsp.service;
 
 import com.gs.dsp.shared.kernel.constants.FieldNames;
 import com.gs.dsp.connectivity.domain.model.Connector;
+import com.gs.dsp.connectivity.domain.model.ConnectorId;
+import com.gs.dsp.connectivity.domain.model.ConnectorType;
+import com.gs.dsp.connectivity.domain.model.ConnectionConfig;
 import com.gs.dsp.dto.MetadataVisibility;
 import org.jdbi.v3.core.Jdbi;
 import org.springframework.stereotype.Service;
@@ -29,10 +32,14 @@ public class ConnectorService {
 
     public List<com.gs.dsp.dto.TableMetadata> testConnectionAndFetchTables(Map<String, Object> config) {
         // Create a transient connector object to reuse DataSourceFactory logic
-        Connector tempConnector = Connector.builder()
-                .name("Temp Connection")
-                .config(config)
-                .build();
+        // Create a transient connector object to reuse DataSourceFactory logic
+        Connector tempConnector = Connector.create(
+                ConnectorId.generate(),
+                "Temp Connection",
+                ConnectorType.database(),
+                new ConnectionConfig(config),
+                "temp-tenant"
+        );
 
         DataSource dataSource = dataSourceFactory.createDataSource(tempConnector);
         Jdbi jdbi = Jdbi.create(dataSource);

@@ -42,7 +42,7 @@ public class ConnectorControllerTest {
         Map<String, Object> request = new HashMap<>();
         request.put("name", "Test DB");
         request.put("type", "DATABASE");
-        request.put("config", Map.of());
+        request.put("config", Map.of("host", "localhost"));
         request.put("isActive", true);
 
         mockMvc.perform(post("/api/v1/connectors")
@@ -61,7 +61,7 @@ public class ConnectorControllerTest {
                 ConnectorId.generate(),
                 "To Approve",
                 new ConnectorType("DATABASE"),
-                new ConnectionConfig(Map.of()),
+                new ConnectionConfig(Map.of("host", "localhost")),
                 "tenant-1"
         );
         connector = connectorRepository.save(connector);
@@ -81,10 +81,10 @@ public class ConnectorControllerTest {
                 ConnectorId.generate(),
                 "Tenant 1 DB",
                 new ConnectorType("DATABASE"),
-                new ConnectionConfig(Map.of()),
+                new ConnectionConfig(Map.of("host", "localhost")),
                 "tenant-1"
         );
-        c1.activate(); // Make it active
+        c1.approve(); // Approve to activate
         connectorRepository.save(c1);
 
         // Create connector for Tenant 2
@@ -92,10 +92,10 @@ public class ConnectorControllerTest {
                 ConnectorId.generate(),
                 "Tenant 2 DB",
                 new ConnectorType("DATABASE"),
-                new ConnectionConfig(Map.of()),
+                new ConnectionConfig(Map.of("host", "localhost")),
                 "tenant-2"
         );
-        c2.activate();
+        c2.approve();
         connectorRepository.save(c2);
 
         // Query as Tenant 1
@@ -129,7 +129,7 @@ public class ConnectorControllerTest {
                 new ConnectionConfig(Map.of("host", "localhost")),
                 "tenant-1"
         );
-        connector.activate();
+        connector.approve();
         connector = connectorRepository.save(connector);
 
         // Update with metadata

@@ -5,6 +5,7 @@ import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import com.gs.dsp.shared.kernel.constants.FieldNames;
 import com.gs.dsp.connectivity.domain.model.Connector;
+import com.gs.dsp.connectivity.domain.model.ConnectorId;
 import com.gs.dsp.domain.DataEndpoint;
 import com.gs.dsp.connectivity.domain.repository.ConnectorRepository;
 import com.gs.dsp.repository.DataEndpointRepository;
@@ -72,7 +73,8 @@ public class DataEndpointController {
             }
 
             UUID connectorId = UUID.fromString(connectorIdStr);
-            Connector connector = connectorRepository.findByIdAndTenantId(connectorId, TenantContext.getTenantId())
+
+            Connector connector = connectorRepository.findByIdAndTenantId(new ConnectorId(connectorId), TenantContext.getTenantId())
                     .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
 
             // Convert map to QueryDefinition
@@ -117,7 +119,8 @@ public class DataEndpointController {
             }
 
             UUID connectorId = UUID.fromString(connectorIdStr);
-            Connector connector = connectorRepository.findByIdAndTenantId(connectorId, TenantContext.getTenantId())
+
+            Connector connector = connectorRepository.findByIdAndTenantId(new ConnectorId(connectorId), TenantContext.getTenantId())
                     .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
 
             // Serialize queryConfig to JSON string
