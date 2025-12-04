@@ -1,9 +1,10 @@
 package com.gs.dsp.service;
 
 import com.gs.dsp.connectivity.domain.model.*;
-import com.gs.dsp.domain.DataEndpoint;
 import com.gs.dsp.connectivity.domain.repository.ConnectorRepository;
-import com.gs.dsp.repository.DataEndpointRepository;
+import com.gs.dsp.dataaccess.domain.model.DataEndpoint;
+import com.gs.dsp.dataaccess.domain.model.DataEndpointId;
+import com.gs.dsp.dataaccess.domain.repository.DataEndpointRepository;
 import com.gs.dsp.util.EncryptionUtil;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Disabled;
@@ -65,14 +66,15 @@ public class DynamicEngineTest {
         connector = connectorRepository.save(connector);
 
         // 2. Create a DataEndpoint exposing the 'connectors' table
-        DataEndpoint endpoint = DataEndpoint.builder()
-                .connector(connector)
-                .name("Test Endpoint")
-                .pathAlias("my-connectors")
-                .queryConfig("{\"mode\": \"BUILDER\", \"rootTable\": \"connectors\"}")
-                .tenantId("tenant-1")
-                .fieldConfig("[{\"name\": \"id\"}, {\"name\": \"name\"}, {\"name\": \"tenant_id\"}]")
-                .build();
+        DataEndpoint endpoint = DataEndpoint.create(
+                DataEndpointId.generate(),
+                connector,
+                "Test Endpoint",
+                "my-connectors",
+                "tenant-1"
+        );
+        endpoint.updateQueryConfig("{\"mode\": \"BUILDER\", \"rootTable\": \"connectors\"}");
+        endpoint.updateFieldMaskingConfig("[{\"name\": \"id\"}, {\"name\": \"name\"}, {\"name\": \"tenant_id\"}]");
         endpoint = dataEndpointRepository.save(endpoint);
 
         // 3. Execute Query via API
@@ -111,14 +113,15 @@ public class DynamicEngineTest {
                 "{\"name\": \"name\", \"alias\": \"connector_name\", \"masking\": {\"enabled\": true, \"type\": \"FIXED\", \"replacement\": \"***MASKED***\"}}" +
                 "]";
 
-        DataEndpoint endpoint = DataEndpoint.builder()
-                .connector(connector)
-                .name("Masked Endpoint")
-                .pathAlias("masked-connectors")
-                .queryConfig("{\"mode\": \"BUILDER\", \"rootTable\": \"connectors\"}")
-                .tenantId("tenant-1")
-                .fieldConfig(fieldConfig)
-                .build();
+        DataEndpoint endpoint = DataEndpoint.create(
+                DataEndpointId.generate(),
+                connector,
+                "Masked Endpoint",
+                "masked-connectors",
+                "tenant-1"
+        );
+        endpoint.updateQueryConfig("{\"mode\": \"BUILDER\", \"rootTable\": \"connectors\"}");
+        endpoint.updateFieldMaskingConfig(fieldConfig);
         dataEndpointRepository.save(endpoint);
 
         mockMvc.perform(get("/api/v1/data/" + endpoint.getId())

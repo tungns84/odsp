@@ -2,7 +2,8 @@ package com.gs.dsp.controller;
 
 import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.gs.dsp.shared.kernel.constants.FieldNames;
-import com.gs.dsp.service.DynamicQueryService;
+import com.gs.dsp.dataaccess.domain.model.DataEndpointId;
+import com.gs.dsp.dataaccess.infrastructure.query.DynamicQueryService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,7 +28,7 @@ public class DynamicDataController {
             @RequestParam(defaultValue = "10") int size
     ) {
         try {
-            List<Map<String, Object>> result = dynamicQueryService.executeQuery(dataEndpointId, page, size);
+            List<Map<String, Object>> result = dynamicQueryService.executeQuery(new DataEndpointId(dataEndpointId), page, size);
             return ResponseEntity.ok(Map.of(
                     "meta", Map.of("page", page, "size", size),
                     "data", result

@@ -2,8 +2,8 @@ package com.gs.dsp.connectivity.application.service;
 
 import com.gs.dsp.connectivity.domain.model.*;
 import com.gs.dsp.connectivity.domain.repository.ConnectorRepository;
+import com.gs.dsp.connectivity.domain.service.ConnectorMetadataService;
 import com.gs.dsp.dto.TableMetadata;
-import com.gs.dsp.service.ConnectorService;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -23,7 +23,7 @@ import java.util.UUID;
 public class ConnectorApplicationService {
     
     private final ConnectorRepository connectorRepository;
-    private final ConnectorService connectorService;  // Infrastructure service for table fetching
+    private final ConnectorMetadataService connectorMetadataService;  // Domain interface
 
     /**
      * Get all connectors for a tenant.
@@ -161,14 +161,14 @@ public class ConnectorApplicationService {
     }
 
     /**
-     * Test connection and fetch tables (delegates to infrastructure service).
+     * Test connection and fetch tables (delegates to domain service).
      */
     public List<TableMetadata> testConnectionAndFetchTables(Map<String, Object> config) {
-        return connectorService.testConnectionAndFetchTables(config);
+        return connectorMetadataService.testConnectionAndFetchTables(config);
     }
 
     /**
-     * Get tables for a connector (delegates to infrastructure service).
+     * Get tables for a connector (delegates to domain service).
      */
     public List<TableMetadata> getTables(String id, String tenantId) {
         ConnectorId connectorId = ConnectorId.from(id);
@@ -177,6 +177,6 @@ public class ConnectorApplicationService {
                 String.format(ErrorMessages.NOT_FOUND_WITH_ID, "Connector", id)
             ));
         
-        return connectorService.fetchTables(connector);
+        return connectorMetadataService.fetchTables(connector);
     }
 }

@@ -22,7 +22,7 @@ public class CacheConfig {
      * Max size: 1000 entries
      */
     @Bean(name = "dataEndpointMetadataCache")
-    public Cache<String, com.gs.dsp.domain.DataEndpoint> dataEndpointMetadataCache() {
+    public Cache<String, com.gs.dsp.dataaccess.domain.model.DataEndpoint> dataEndpointMetadataCache() {
         return Caffeine.newBuilder()
                 .maximumSize(1000)
                 .expireAfterWrite(AppConstants.CACHE_TTL_MINUTES, TimeUnit.MINUTES)
@@ -37,7 +37,7 @@ public class CacheConfig {
      * Max size: 500 entries
      */
     @Bean(name = "fieldDefinitionsCache")
-    public Cache<String, java.util.List<com.gs.dsp.service.DynamicQueryService.FieldDefinition>> fieldDefinitionsCache() {
+    public Cache<String, java.util.List<com.gs.dsp.dataaccess.infrastructure.query.DynamicQueryService.FieldDefinition>> fieldDefinitionsCache() {
         return Caffeine.newBuilder()
                 .maximumSize(500)
                 .expireAfterWrite(1, TimeUnit.HOURS)

@@ -16,6 +16,7 @@ public final class ErrorMessages {
     public static final String DATA_ENDPOINT_NOT_FOUND = "Data Endpoint not found: %s";
     public static final String API_KEY_NOT_FOUND = "API key not found";
     public static final String RESOURCE_NOT_FOUND = "%s not found";
+    public static final String NOT_FOUND_WITH_ID = "%s not found with ID: %s";
 
     // Access Denied Messages
     public static final String ACCESS_DENIED_RESOURCE_NOT_FOUND = "Access denied: %s not found";

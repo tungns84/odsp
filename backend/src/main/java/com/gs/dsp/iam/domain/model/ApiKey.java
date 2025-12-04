@@ -1,31 +1,28 @@
 package com.gs.dsp.iam.domain.model;
 
+import com.gs.dsp.shared.domain.model.AggregateRoot;
 import com.gs.dsp.shared.kernel.constants.AppConstants;
-import com.gs.dsp.iam.domain.model.TenantId;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
+import lombok.Getter;
 import lombok.NoArgsConstructor;
 import org.hibernate.annotations.CreationTimestamp;
 
 import java.time.LocalDateTime;
-import java.util.UUID;
 
 @Entity
 @Table(name = "api_keys", indexes = {
     @Index(name = "idx_key_hash", columnList = "key_hash"),
     @Index(name = "idx_tenant_api", columnList = "tenant_id")
 })
-@Data
-@Builder
+@Getter
 @NoArgsConstructor
-@AllArgsConstructor
-public class ApiKey implements org.springframework.data.domain.Persistable<UUID> {
-    @Id
-    private UUID id;
+public class ApiKey extends AggregateRoot<ApiKeyId> {
+
+    @EmbeddedId
+    @AttributeOverride(name = "id", column = @Column(name = "id"))
+    private ApiKeyId id;
 
     @Embedded
     @AttributeOverride(name = "id", column = @Column(name = "tenant_id", nullable = false, length = 50))
@@ -47,8 +44,7 @@ public class ApiKey implements org.springframework.data.domain.Persistable<UUID>
 
     @NotBlank(message = "Status is required")
     @Column(nullable = false, length = 20)
-    @Builder.Default
-    private String status = AppConstants.STATUS_ACTIVE; // ACTIVE, REVOKED, EXPIRED
+    private String status;
 
     @Column(name = "expires_at")
     private LocalDateTime expiresAt;
@@ -60,18 +56,29 @@ public class ApiKey implements org.springframework.data.domain.Persistable<UUID>
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
 
-    @Transient
-    @Builder.Default
-    private boolean isNew = true;
-
-    @Override
-    public boolean isNew() {
-        return isNew;
+    // Factory method
+    public static ApiKey create(ApiKeyId id, TenantId tenantId, String name, String keyHash, String prefix, LocalDateTime expiresAt) {
+        ApiKey apiKey = new ApiKey();
+        apiKey.id = id;
+        apiKey.tenantId = tenantId;
+        apiKey.name = name;
+        apiKey.keyHash = keyHash;
+        apiKey.prefix = prefix;
+        apiKey.expiresAt = expiresAt;
+        apiKey.status = AppConstants.STATUS_ACTIVE;
+        return apiKey;
     }
 
-    @PostLoad
-    @PrePersist
-    void markNotNew() {
-        this.isNew = false;
+    // Business methods
+    public void revoke() {
+        this.status = "REVOKED";
+    }
+
+    public void updateLastUsedAt() {
+        this.lastUsedAt = LocalDateTime.now();
+    }
+
+    public String getIdValue() {
+        return id != null ? id.toString() : null;
     }
 }

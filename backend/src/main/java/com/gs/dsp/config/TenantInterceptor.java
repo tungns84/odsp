@@ -2,7 +2,7 @@ package com.gs.dsp.config;
 
 import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
-import com.gs.dsp.service.ApiKeyService;
+import com.gs.dsp.iam.application.service.ApiKeyApplicationService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
@@ -16,7 +16,7 @@ public class TenantInterceptor implements HandlerInterceptor {
     private static final String TENANT_HEADER = AppConstants.HEADER_TENANT_ID;
     private static final String API_KEY_HEADER = AppConstants.HEADER_API_KEY;
 
-    private final ApiKeyService apiKeyService;
+    private final ApiKeyApplicationService apiKeyService;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {

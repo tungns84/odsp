@@ -6,10 +6,11 @@ import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import com.gs.dsp.shared.kernel.constants.FieldNames;
 import com.gs.dsp.connectivity.domain.model.Connector;
 import com.gs.dsp.connectivity.domain.model.ConnectorId;
-import com.gs.dsp.domain.DataEndpoint;
+import com.gs.dsp.dataaccess.domain.model.DataEndpoint;
+import com.gs.dsp.dataaccess.domain.model.DataEndpointId;
+import com.gs.dsp.dataaccess.application.service.DataEndpointApplicationService;
 import com.gs.dsp.connectivity.domain.repository.ConnectorRepository;
-import com.gs.dsp.repository.DataEndpointRepository;
-import com.gs.dsp.service.DynamicQueryService;
+import com.gs.dsp.dataaccess.infrastructure.query.DynamicQueryService;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -19,24 +20,24 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import com.gs.dsp.domain.query.QueryDefinition;
-import com.gs.dsp.security.AuthorizationService;
+import com.gs.dsp.shared.infrastructure.security.AuthorizationService;
 
 @RestController
 @RequestMapping("/api/v1/data-endpoints")
 public class DataEndpointController {
 
-    private final DataEndpointRepository dataEndpointRepository;
+    private final DataEndpointApplicationService dataEndpointApplicationService;
     private final ConnectorRepository connectorRepository;
     private final DynamicQueryService dynamicQueryService;
     private final AuthorizationService authorizationService;
 
     public DataEndpointController(
-            DataEndpointRepository dataEndpointRepository,
+            DataEndpointApplicationService dataEndpointApplicationService,
             ConnectorRepository connectorRepository,
             DynamicQueryService dynamicQueryService,
             AuthorizationService authorizationService
     ) {
-        this.dataEndpointRepository = dataEndpointRepository;
+        this.dataEndpointApplicationService = dataEndpointApplicationService;
         this.connectorRepository = connectorRepository;
         this.dynamicQueryService = dynamicQueryService;
         this.authorizationService = authorizationService;
@@ -44,20 +45,13 @@ public class DataEndpointController {
 
     @GetMapping
     public List<DataEndpoint> getAllEndpoints() {
-        return dataEndpointRepository.findAllByTenantId(TenantContext.getTenantId());
+        return dataEndpointApplicationService.getAllEndpoints(TenantContext.getTenantId());
     }
 
     @GetMapping("/{id}")
     public ResponseEntity<DataEndpoint> getEndpointById(@PathVariable String id) {
-        // SECURITY: Validate UUID format
-        UUID uuid = authorizationService.validateAndParseUuid(id, "Data Endpoint");
-        
-        return dataEndpointRepository.findByIdAndTenantId(uuid, TenantContext.getTenantId())
-                .map(endpoint -> {
-                    // SECURITY: Validate tenant access
-                    authorizationService.validateTenantAccess(endpoint.getTenantId(), "Data Endpoint");
-                    return ResponseEntity.ok(endpoint);
-                })
+        return dataEndpointApplicationService.getEndpointById(id, TenantContext.getTenantId())
+                .map(ResponseEntity::ok)
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -118,11 +112,6 @@ public class DataEndpointController {
                 return ResponseEntity.badRequest().build();
             }
 
-            UUID connectorId = UUID.fromString(connectorIdStr);
-
-            Connector connector = connectorRepository.findByIdAndTenantId(new ConnectorId(connectorId), TenantContext.getTenantId())
-                    .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
-
             // Serialize queryConfig to JSON string
             ObjectMapper mapper = new ObjectMapper();
             String queryConfigJson = mapper.writeValueAsString(queryConfigMap);
@@ -130,54 +119,46 @@ public class DataEndpointController {
             // Build fieldConfig JSON with masking configuration
             String fieldConfig = null;
             if (maskingConfig != null && !maskingConfig.isEmpty()) {
-                try {
-                    ObjectMapper objectMapper = new ObjectMapper();
-                    List<Map<String, Object>> fieldDefinitions = new java.util.ArrayList<>();
-
-                    for (Map.Entry<String, Object> entry : maskingConfig.entrySet()) {
-                        String columnName = entry.getKey();
-                        @SuppressWarnings("unchecked")
-                        Map<String, String> config = (Map<String, String>) entry.getValue();
-                        
-                        Map<String, Object> fieldDef = new HashMap<>();
-                        fieldDef.put("name", columnName);
-                        
-                        Map<String, Object> masking = new HashMap<>();
-                        masking.put("enabled", true);
-                        
-                        String type = config.get("type");
-                        if (FieldNames.MASK_ALL.equals(type)) {
-                            masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_FIXED);
-                            masking.put(FieldNames.REPLACEMENT, "*****");
-                        } else if (AppConstants.MASKING_TYPE_PARTIAL.equals(type)) {
-                            masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_PARTIAL); // Custom type for backend to handle
-                            masking.put(FieldNames.PATTERN, config.get(FieldNames.PATTERN));
-                        }
-                        
-                        fieldDef.put("masking", masking);
-                        fieldDefinitions.add(fieldDef);
+                List<Map<String, Object>> fieldDefinitions = new java.util.ArrayList<>();
+                for (Map.Entry<String, Object> entry : maskingConfig.entrySet()) {
+                    String columnName = entry.getKey();
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> config = (Map<String, String>) entry.getValue();
+                    
+                    Map<String, Object> fieldDef = new HashMap<>();
+                    fieldDef.put("name", columnName);
+                    
+                    Map<String, Object> masking = new HashMap<>();
+                    masking.put("enabled", true);
+                    
+                    String type = config.get("type");
+                    if (FieldNames.MASK_ALL.equals(type)) {
+                        masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_FIXED);
+                        masking.put(FieldNames.REPLACEMENT, "*****");
+                    } else if (AppConstants.MASKING_TYPE_PARTIAL.equals(type)) {
+                        masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_PARTIAL);
+                        masking.put(FieldNames.PATTERN, config.get(FieldNames.PATTERN));
                     }
                     
-                    fieldConfig = objectMapper.writeValueAsString(fieldDefinitions);
-                } catch (Exception e) {
-                    System.err.println("Failed to serialize masking config: " + e.getMessage());
+                    fieldDef.put("masking", masking);
+                    fieldDefinitions.add(fieldDef);
                 }
+                fieldConfig = mapper.writeValueAsString(fieldDefinitions);
             }
 
-            DataEndpoint endpoint = DataEndpoint.builder()
-                    .connector(connector)
-                    .name(name)
-                    .description(description)
-                    .pathAlias(name.toLowerCase().replaceAll("\\s+", "_"))
-                    .queryConfig(queryConfigJson)
-                    .fieldConfig(fieldConfig)
-                    .tenantId(TenantContext.getTenantId())
-                    .isPublic(false)
-                    .allowedMethods(AppConstants.METHOD_GET)
-                    .status(AppConstants.STATUS_ACTIVE)
-                    .build();
+            String pathAlias = name.toLowerCase().replaceAll("\\s+", "_");
 
-            DataEndpoint saved = dataEndpointRepository.save(endpoint);
+            // Delegate to application service
+            DataEndpoint saved = dataEndpointApplicationService.createEndpoint(
+                connectorIdStr,
+                name,
+                pathAlias,
+                description,
+                queryConfigJson,
+                fieldConfig,
+                TenantContext.getTenantId()
+            );
+
             return ResponseEntity.ok(saved);
         } catch (Exception e) {
             return ResponseEntity.badRequest().build();
@@ -189,73 +170,65 @@ public class DataEndpointController {
             @PathVariable String id,
             @RequestBody Map<String, Object> request
     ) {
-        // SECURITY: Validate UUID format
-        UUID uuid = authorizationService.validateAndParseUuid(id, "Data Endpoint");
-        
-        return dataEndpointRepository.findByIdAndTenantId(uuid, TenantContext.getTenantId())
-                .map(endpoint -> {
-                    // SECURITY: Validate tenant access
-                    authorizationService.validateTenantAccess(endpoint.getTenantId(), "Data Endpoint");
-                    
-                    @SuppressWarnings("unchecked")
-                    Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
+        try {
+            @SuppressWarnings("unchecked")
+            Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
+            String name = (String) request.get("name");
+            String description = (String) request.get("description");
 
-                    String name = (String) request.get("name");
-                    String description = (String) request.get("description");
+            String queryConfigJson = null;
+            if (queryConfigMap != null) {
+                ObjectMapper mapper = new ObjectMapper();
+                queryConfigJson = mapper.writeValueAsString(queryConfigMap);
+            }
 
-                    if (name != null) {
-                        endpoint.setName(name);
-                        endpoint.setPathAlias(name.toLowerCase().replaceAll("\\s+", "_"));
-                    }
-                    if (description != null) {
-                        endpoint.setDescription(description);
-                    }
-                    if (queryConfigMap != null) {
-                        try {
-                            ObjectMapper mapper = new ObjectMapper();
-                            endpoint.setQueryConfig(mapper.writeValueAsString(queryConfigMap));
-                        } catch (Exception e) {
-                            throw new RuntimeException(String.format(ErrorMessages.FAILED_TO_SERIALIZE, FieldNames.QUERY_CONFIG), e);
-                        }
-                    }
+            DataEndpoint updated = dataEndpointApplicationService.updateEndpoint(
+                id,
+                name,
+                description,
+                queryConfigJson,
+                null, // fieldConfig not updated in this endpoint
+                TenantContext.getTenantId()
+            );
 
-                    return ResponseEntity.ok(dataEndpointRepository.save(endpoint));
-                })
-                .orElse(ResponseEntity.notFound().build());
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        } catch (Exception e) {
+            return ResponseEntity.badRequest().build();
+        }
     }
 
     @PatchMapping("/{id}/status")
     public ResponseEntity<DataEndpoint> toggleStatus(
-            @PathVariable UUID id,
+            @PathVariable String id,
             @RequestBody Map<String, String> statusUpdate
     ) {
-        return dataEndpointRepository.findByIdAndTenantId(id, TenantContext.getTenantId())
-                .map(endpoint -> {
-                    String status = statusUpdate.get("status");
-                    // For now, we'll use isPublic as a proxy for ACTIVE/INACTIVE
-                    if (AppConstants.STATUS_ACTIVE.equals(status)) {
-                        endpoint.setPublic(true);
-                    } else if (AppConstants.STATUS_INACTIVE.equals(status)) {
-                        endpoint.setPublic(false);
-                    }
-                    return ResponseEntity.ok(dataEndpointRepository.save(endpoint));
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            String status = statusUpdate.get("status");
+            DataEndpoint updated;
+            
+            if (AppConstants.STATUS_ACTIVE.equals(status)) {
+                updated = dataEndpointApplicationService.activateEndpoint(id, TenantContext.getTenantId());
+            } else if (AppConstants.STATUS_INACTIVE.equals(status)) {
+                updated = dataEndpointApplicationService.deactivateEndpoint(id, TenantContext.getTenantId());
+            } else {
+                return ResponseEntity.badRequest().build();
+            }
+            
+            return ResponseEntity.ok(updated);
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEndpoint(@PathVariable String id) {
-        // SECURITY: Validate UUID format
-        UUID uuid = authorizationService.validateAndParseUuid(id, "Data Endpoint");
-        
-        return dataEndpointRepository.findByIdAndTenantId(uuid, TenantContext.getTenantId())
-                .map(endpoint -> {
-                    // SECURITY: Validate tenant access
-                    authorizationService.validateTenantAccess(endpoint.getTenantId(), "Data Endpoint");
-                    
-                    dataEndpointRepository.delete(endpoint);
-                    return ResponseEntity.noContent().<Void>build();
-                })
-                .orElse(ResponseEntity.notFound().build());
+        try {
+            dataEndpointApplicationService.deleteEndpoint(id, TenantContext.getTenantId());
+            return ResponseEntity.noContent().build();
+        } catch (IllegalArgumentException e) {
+            return ResponseEntity.notFound().build();
+        }
     }
 }

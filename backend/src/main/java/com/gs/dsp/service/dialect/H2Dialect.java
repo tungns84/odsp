@@ -1,7 +1,7 @@
 package com.gs.dsp.service.dialect;
 
-import com.gs.dsp.service.DynamicQueryService.FieldDefinition;
-import com.gs.dsp.service.DynamicQueryService.MaskingConfig;
+import com.gs.dsp.dataaccess.infrastructure.query.DynamicQueryService.FieldDefinition;
+import com.gs.dsp.dataaccess.infrastructure.query.DynamicQueryService.MaskingConfig;
 import org.springframework.stereotype.Component;
 
 @Component
