@@ -1,6 +1,6 @@
 package com.gs.dsp.shared.infrastructure.security;
 
-import com.gs.dsp.config.TenantContext;
+import com.gs.dsp.shared.infrastructure.config.TenantContext;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;

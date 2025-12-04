@@ -1,6 +1,6 @@
 package com.gs.dsp.shared.infrastructure.security;
 
-import com.gs.dsp.config.TenantContext;
+import com.gs.dsp.shared.infrastructure.config.TenantContext;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

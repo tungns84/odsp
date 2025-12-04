@@ -3,7 +3,7 @@ package com.gs.dsp.iam.infrastructure.web.controller;
 import com.gs.dsp.iam.application.service.TenantApplicationService;
 import com.gs.dsp.iam.domain.model.Tenant;
 import com.gs.dsp.iam.domain.model.TenantStatus;
-import com.gs.dsp.dto.TenantDTO;
+import com.gs.dsp.iam.infrastructure.primary.dto.TenantDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;

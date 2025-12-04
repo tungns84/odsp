@@ -2,7 +2,7 @@ package com.gs.dsp.iam.infrastructure.web.controller;
 
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import com.gs.dsp.iam.domain.model.ApiKey;
-import com.gs.dsp.dto.ApiKeyDTO;
+import com.gs.dsp.iam.infrastructure.primary.dto.ApiKeyDTO;
 import com.gs.dsp.iam.application.service.ApiKeyApplicationService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;

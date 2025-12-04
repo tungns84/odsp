@@ -3,7 +3,7 @@ package com.gs.dsp.connectivity.application.service;
 import com.gs.dsp.connectivity.domain.model.*;
 import com.gs.dsp.connectivity.domain.repository.ConnectorRepository;
 import com.gs.dsp.connectivity.domain.service.ConnectorMetadataService;
-import com.gs.dsp.dto.TableMetadata;
+import com.gs.dsp.connectivity.infrastructure.primary.dto.TableMetadata;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;

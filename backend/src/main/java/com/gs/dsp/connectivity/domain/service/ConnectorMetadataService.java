@@ -1,7 +1,7 @@
 package com.gs.dsp.connectivity.domain.service;
 
 import com.gs.dsp.connectivity.domain.model.Connector;
-import com.gs.dsp.dto.TableMetadata;
+import com.gs.dsp.connectivity.infrastructure.primary.dto.TableMetadata;
 
 import java.util.List;
 import java.util.Map;

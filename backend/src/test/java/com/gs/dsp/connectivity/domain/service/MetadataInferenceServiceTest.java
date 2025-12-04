@@ -1,6 +1,6 @@
 package com.gs.dsp.connectivity.domain.service;
 
-import com.gs.dsp.dto.SemanticType;
+import com.gs.dsp.connectivity.infrastructure.primary.dto.SemanticType;
 import org.junit.jupiter.api.Test;
 
 import java.util.Map;

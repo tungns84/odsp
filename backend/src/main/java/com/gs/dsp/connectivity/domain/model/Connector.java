@@ -1,6 +1,6 @@
 package com.gs.dsp.connectivity.domain.model;
 
-import com.gs.dsp.dto.TableMetadata;
+import com.gs.dsp.connectivity.infrastructure.primary.dto.TableMetadata;
 import com.gs.dsp.shared.domain.model.AggregateRoot;
 import jakarta.persistence.*;
 import lombok.Getter;

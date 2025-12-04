@@ -1,16 +1,16 @@
 package com.gs.dsp.connectivity.domain.service;
 
-import com.gs.dsp.dto.SemanticType;
+import com.gs.dsp.connectivity.infrastructure.primary.dto.SemanticType;
 
 import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Service for intelligent metadata inference from database schema information.
+ * Domain Service for intelligent metadata inference from database schema information.
  * Automatically infers semantic types, generates display names, and suggests formatting.
  * 
- * NOTE: This is a Domain Service (pure business logic), not a Spring @Service.
- * It should be injected as a regular dependency without framework annotations.
+ * NOTE: This is a pure Domain Service (framework-agnostic). It is registered as a
+ * Spring bean via ConnectivityDomainConfig in the infrastructure layer.
  */
 public class MetadataInferenceService {
 
