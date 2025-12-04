@@ -5,7 +5,7 @@ export const connectorService = {
     /**
      * Get all connectors for the current tenant
      */
-    getAll: () => apiClient.get<Connector[]>('/api/v1/connectors'),
+    getAll: () => apiClient.get<import('../types/connector').ConnectorSummary[]>('/api/v1/connectors'),
 
     /**
      * Get a specific connector by ID
@@ -45,4 +45,9 @@ export const connectorService = {
      * Get tables for a specific connector
      */
     getTables: (id: string) => apiClient.get<import('../types/connector').TableMetadata[]>(`/api/v1/connectors/${id}/tables`),
+
+    /**
+     * Test connection for an existing connector
+     */
+    testConnectionById: (id: string) => apiClient.post<void>(`/api/v1/connectors/${id}/test-connection`, {}),
 };

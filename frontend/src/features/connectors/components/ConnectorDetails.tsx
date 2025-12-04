@@ -27,20 +27,92 @@ export const ConnectorDetails: React.FC<ConnectorDetailsProps> = ({
     const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
+    const [isLoading, setIsLoading] = useState(false);
+    const [fullConnector, setFullConnector] = useState<Connector>(connector);
+    const [activeTab, setActiveTab] = useState<'config' | 'tables'>('config');
+    const [tables, setTables] = useState<import('../../../types/connector').TableMetadata[]>([]);
+    const [loadingTables, setLoadingTables] = useState(false);
+    const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
+
+    // Fetch full details on mount
+    React.useEffect(() => {
+        const fetchDetails = async () => {
+            setIsLoading(true);
+            try {
+                const response = await import('../../../services/connectorService').then(m => m.connectorService.getById(connector.id));
+                setFullConnector(response.data);
+            } catch (error) {
+                console.error('Failed to fetch connector details:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+
+        if (connector.id) {
+            fetchDetails();
+        }
+    }, [connector.id]);
+
+    // Fetch tables when tab is active
+    React.useEffect(() => {
+        const fetchTables = async () => {
+            if (activeTab === 'tables' && tables.length === 0 && !loadingTables) {
+                setLoadingTables(true);
+                try {
+                    const response = await import('../../../services/connectorService').then(m => m.connectorService.getTables(connector.id));
+                    setTables(response.data);
+                } catch (error) {
+                    console.error('Failed to fetch tables:', error);
+                } finally {
+                    setLoadingTables(false);
+                }
+            }
+        };
+
+        fetchTables();
+    }, [activeTab, connector.id]);
+
+    const toggleTableExpand = (tableName: string) => {
+        const newExpanded = new Set(expandedTables);
+        if (newExpanded.has(tableName)) {
+            newExpanded.delete(tableName);
+        } else {
+            newExpanded.add(tableName);
+        }
+        setExpandedTables(newExpanded);
+    };
+
+    // Helper to safely get connector type (backend may return string or object)
+    const getConnectorType = (): string => {
+        if (typeof fullConnector.type === 'string') {
+            return fullConnector.type;
+        }
+        if (typeof fullConnector.type === 'object' && fullConnector.type !== null) {
+            return (fullConnector.type as any).type || 'Unknown';
+        }
+        return 'Unknown';
+    };
 
     const handleTestConnection = async () => {
         setIsTesting(true);
         setTestResult(null);
-        await onTestConnection(connector.id);
 
-        // Simulate result
-        await new Promise(resolve => setTimeout(resolve, 1500));
-        const success = Math.random() > 0.3;
-        setTestResult({
-            success,
-            message: success ? 'Connection successful!' : 'Failed to connect: Connection timed out.'
-        });
-        setIsTesting(false);
+        try {
+            await import('../../../services/connectorService').then(m => m.connectorService.testConnectionById(connector.id));
+            setTestResult({
+                success: true,
+                message: 'Connection successful!'
+            });
+            if (onTestConnection) onTestConnection(connector.id);
+        } catch (error) {
+            console.error('Test connection failed:', error);
+            setTestResult({
+                success: false,
+                message: 'Failed to connect. Please check your configuration.'
+            });
+        } finally {
+            setIsTesting(false);
+        }
     };
 
     const handleDelete = () => {
@@ -97,26 +169,132 @@ export const ConnectorDetails: React.FC<ConnectorDetailsProps> = ({
                 )}
 
                 {/* Info Section */}
-                <div className="mb-6 rounded-lg border border-surface-border/50 bg-surface/30 p-4">
-                    <h3 className="mb-4 text-sm font-semibold text-text-secondary">Configuration</h3>
-                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                        <div>
-                            <label className="text-xs font-medium text-text-tertiary">Type</label>
-                            <p className="mt-1 text-sm text-white">{connector.type}</p>
-                        </div>
-                        <div>
-                            <label className="text-xs font-medium text-text-tertiary">Created At</label>
-                            <p className="mt-1 text-sm text-white">{connector.createdAt}</p>
-                        </div>
-                        {connector.config && Object.entries(connector.config).map(([key, value]) => (
-                            <div key={key}>
-                                <label className="text-xs font-medium text-text-tertiary">{key}</label>
-                                <p className="mt-1 text-sm text-white">
-                                    {key.toLowerCase().includes('password') ? '••••••••' : String(value)}
-                                </p>
-                            </div>
-                        ))}
+                {/* Tabs */}
+                <div className="mb-6 border-b border-surface-border">
+                    <div className="flex gap-6">
+                        <button
+                            onClick={() => setActiveTab('config')}
+                            className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'config'
+                                ? 'border-b-2 border-primary text-primary'
+                                : 'text-text-tertiary hover:text-text-secondary'
+                                }`}
+                        >
+                            Configuration
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('tables')}
+                            className={`pb-3 text-sm font-medium transition-colors ${activeTab === 'tables'
+                                ? 'border-b-2 border-primary text-primary'
+                                : 'text-text-tertiary hover:text-text-secondary'
+                                }`}
+                        >
+                            Registered Tables
+                        </button>
                     </div>
+                </div>
+
+                {/* Tab Content */}
+                <div className="mb-6 rounded-lg border border-surface-border/50 bg-surface/30 p-4">
+                    {activeTab === 'config' ? (
+                        <>
+                            <h3 className="mb-4 text-sm font-semibold text-text-secondary">Configuration</h3>
+                            {isLoading ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                                    <div>
+                                        <label className="text-xs font-medium text-text-tertiary">Type</label>
+                                        <p className="mt-1 text-sm text-white">{getConnectorType()}</p>
+                                    </div>
+                                    <div>
+                                        <label className="text-xs font-medium text-text-tertiary">Created At</label>
+                                        <p className="mt-1 text-sm text-white">{fullConnector.createdAt}</p>
+                                    </div>
+                                    {fullConnector.config && Object.entries(fullConnector.config).map(([key, value]) => {
+                                        // Skip rendering if value is null, undefined, or an object/array
+                                        if (value === null || value === undefined) return null;
+                                        if (typeof value === 'object') return null;
+
+                                        const displayValue = key.toLowerCase().includes('password')
+                                            ? '••••••••'
+                                            : String(value);
+
+                                        return (
+                                            <div key={key}>
+                                                <label className="text-xs font-medium text-text-tertiary">{key}</label>
+                                                <p className="mt-1 text-sm text-white">{displayValue}</p>
+                                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
+                        </>
+                    ) : (
+                        <>
+                            <h3 className="mb-4 text-sm font-semibold text-text-secondary">Registered Tables</h3>
+                            {loadingTables ? (
+                                <div className="flex items-center justify-center py-8">
+                                    <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                                </div>
+                            ) : tables.length === 0 ? (
+                                <p className="text-sm text-text-tertiary">No tables registered.</p>
+                            ) : (
+                                <div className="space-y-2">
+                                    {tables.map((table) => (
+                                        <div key={table.name} className="rounded-lg border border-surface-border bg-surface-elevated overflow-hidden">
+                                            <button
+                                                onClick={() => toggleTableExpand(table.name)}
+                                                className="flex w-full items-center justify-between p-3 text-left hover:bg-surface-border/50"
+                                            >
+                                                <div className="flex items-center gap-3">
+                                                    <span className="material-symbols-outlined text-text-tertiary">table_chart</span>
+                                                    <div>
+                                                        <p className="font-medium text-white">{table.name}</p>
+                                                        {table.displayName && (
+                                                            <p className="text-xs text-text-tertiary">{table.displayName}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                <span className={`material-symbols-outlined text-text-tertiary transition-transform ${expandedTables.has(table.name) ? 'rotate-180' : ''}`}>
+                                                    expand_more
+                                                </span>
+                                            </button>
+
+                                            {expandedTables.has(table.name) && (
+                                                <div className="border-t border-surface-border bg-surface p-3">
+                                                    <table className="w-full text-sm">
+                                                        <thead>
+                                                            <tr className="text-left text-xs text-text-tertiary">
+                                                                <th className="pb-2">Column</th>
+                                                                <th className="pb-2">Type</th>
+                                                                <th className="pb-2">Semantic Type</th>
+                                                                <th className="pb-2">Key</th>
+                                                            </tr>
+                                                        </thead>
+                                                        <tbody>
+                                                            {table.columns.map((col) => (
+                                                                <tr key={col.name} className="border-b border-surface-border/30 last:border-0">
+                                                                    <td className="py-2 text-white">{col.name}</td>
+                                                                    <td className="py-2 text-text-secondary">{col.dataType}</td>
+                                                                    <td className="py-2 text-text-secondary">{col.semanticType || '-'}</td>
+                                                                    <td className="py-2 text-text-secondary">
+                                                                        {col.isPrimaryKey && <span className="rounded bg-primary/20 px-1.5 py-0.5 text-xs text-primary">PK</span>}
+                                                                        {col.isForeignKey && <span className="ml-1 rounded bg-blue-500/20 px-1.5 py-0.5 text-xs text-blue-400">FK</span>}
+                                                                    </td>
+                                                                </tr>
+                                                            ))}
+                                                        </tbody>
+                                                    </table>
+                                                </div>
+                                            )}
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </>
+                    )}
                 </div>
 
                 {/* Action Bar */}

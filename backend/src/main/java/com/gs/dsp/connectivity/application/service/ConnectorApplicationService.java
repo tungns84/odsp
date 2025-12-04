@@ -168,6 +168,20 @@ public class ConnectorApplicationService {
     }
 
     /**
+     * Test connection for an existing connector.
+     */
+    public void testConnection(String id, String tenantId) {
+        ConnectorId connectorId = ConnectorId.from(id);
+        Connector connector = connectorRepository.findByIdAndTenantId(connectorId, tenantId)
+            .orElseThrow(() -> new IllegalArgumentException(
+                String.format(ErrorMessages.NOT_FOUND_WITH_ID, "Connector", id)
+            ));
+        
+        // Reuse connector's stored config directly
+        connectorMetadataService.testConnectionAndFetchTables(connector);
+    }
+
+    /**
      * Get tables for a connector (delegates to domain service).
      */
     public List<TableMetadata> getTables(String id, String tenantId) {
@@ -177,6 +191,6 @@ public class ConnectorApplicationService {
                 String.format(ErrorMessages.NOT_FOUND_WITH_ID, "Connector", id)
             ));
         
-        return connectorMetadataService.fetchTables(connector);
+        return connector.getRegisteredTables();
     }
 }

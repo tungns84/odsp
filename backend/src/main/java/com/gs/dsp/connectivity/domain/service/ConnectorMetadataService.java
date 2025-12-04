@@ -14,7 +14,12 @@ import java.util.Map;
 public interface ConnectorMetadataService {
     
     /**
-     * Test connection and fetch tables from a database configuration.
+     * Test connection and fetch tables for an existing connector (reuses stored config).
+     */
+    List<TableMetadata> testConnectionAndFetchTables(Connector connector);
+
+    /**
+     * Test connection and fetch tables from a raw configuration (for new connector creation).
      */
     List<TableMetadata> testConnectionAndFetchTables(Map<String, Object> config);
     

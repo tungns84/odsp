@@ -48,8 +48,9 @@ export const WizardStep1ConnectionDetails: React.FC<WizardStep1Props> = ({
         } catch (err: any) {
             console.error('Connection test failed:', err);
             // Parse backend error response
-            const errorMessage = err.response?.data?.message
-                || err.response?.data?.error
+            const errorMessage = err.response?.data?.code
+                || err.response?.data?.message
+                || err.response?.data?.error  // Backward compatibility
                 || (err.response?.status === 500 ? 'Server error. Please check database configuration.' : '')
                 || (err.response?.status === 400 ? 'Invalid configuration. Please check your inputs.' : '')
                 || 'Failed to connect. Please check your credentials.';

@@ -94,7 +94,7 @@ export const Step4Finalize: React.FC<Step4FinalizeProps> = ({
             console.error('Test endpoint failed:', err);
             setTestResult({
                 success: false,
-                message: err.response?.data?.error || err.response?.data?.message || 'Test failed: Unable to execute query.'
+                message: err.response?.data?.code || err.response?.data?.error || err.response?.data?.message || 'Test failed: Unable to execute query.'
             });
         } finally {
             setIsTesting(false);

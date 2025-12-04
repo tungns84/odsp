@@ -197,7 +197,7 @@ export const CreateDataEndpointWizard: React.FC = () => {
             window.history.back();
         } catch (err: any) {
             console.error('Failed to create endpoint:', err);
-            alert(err.response?.data?.error || err.response?.data?.message || 'Failed to create endpoint');
+            alert(err.response?.data?.code || err.response?.data?.error || err.response?.data?.message || 'Failed to create endpoint');
         }
     };
 

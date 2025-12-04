@@ -51,7 +51,7 @@ public class ConnectorControllerTest {
                         .content(objectMapper.writeValueAsString(request)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Test DB"))
-                .andExpect(jsonPath("$.tenantId").value("tenant-1"))
+                // tenantId is not returned in DTO
                 .andExpect(jsonPath("$.status").value("INIT"));
     }
 
@@ -161,5 +161,40 @@ public class ConnectorControllerTest {
                 .andExpect(jsonPath("$.name").value("Updated DB"))
                 .andExpect(jsonPath("$.registeredTables.length()").value(1))
                 .andExpect(jsonPath("$.registeredTables[0].name").value("products"));
+    }
+
+    @Test
+    void getConnector_ShouldSanitizeConfigAndReturnViewInfo() throws Exception {
+        Map<String, Object> configMap = new HashMap<>();
+        configMap.put("host", "localhost");
+        configMap.put("port", 5432);
+        configMap.put("databaseName", "mydb");
+        configMap.put("username", "admin");
+        configMap.put("password", "superSecret123");
+        configMap.put("apiSecret", "hidden-key");
+        configMap.put("publicInfo", "visible");
+
+        Connector connector = Connector.create(
+                ConnectorId.generate(),
+                "Secure DB",
+                new ConnectorType("DATABASE"),
+                new ConnectionConfig(configMap),
+                "tenant-1"
+        );
+        connectorRepository.save(connector);
+
+        mockMvc.perform(get("/api/v1/connectors/" + connector.getIdValue())
+                        .header("X-Tenant-ID", "tenant-1"))
+                .andExpect(status().isOk())
+                // Verify Config Sanitization
+                .andExpect(jsonPath("$.config.host").value("localhost"))
+                .andExpect(jsonPath("$.config.publicInfo").value("visible"))
+                .andExpect(jsonPath("$.config.password").value("******"))
+                .andExpect(jsonPath("$.config.apiSecret").value("******"))
+                // Verify View Info
+                .andExpect(jsonPath("$.viewInfo.host").value("localhost"))
+                .andExpect(jsonPath("$.viewInfo.port").value(5432))
+                .andExpect(jsonPath("$.viewInfo.databaseName").value("mydb"))
+                .andExpect(jsonPath("$.viewInfo.username").value("admin"));
     }
 }

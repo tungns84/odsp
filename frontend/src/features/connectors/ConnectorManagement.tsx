@@ -5,7 +5,7 @@ import { ConnectorFilters } from './components/ConnectorFilters';
 import { ConnectorTable } from './components/ConnectorTable';
 import { ConnectorWizard } from './components/ConnectorWizard';
 import { ConnectorDetails } from './components/ConnectorDetails';
-import { EditConnectorModal } from './components/EditConnectorModal';
+
 import type { Connector, ConnectorStats, ConnectorFilters as ConnectorFiltersType } from '../../types/connector';
 import { mockAuditLogs } from '../../data';
 import { connectorService } from '../../services';
@@ -241,13 +241,13 @@ export const ConnectorManagement: React.FC = () => {
                 />
             )}
 
-            {/* Edit Modal */}
+            {/* Edit Wizard */}
             {editingConnector && (
-                <EditConnectorModal
+                <ConnectorWizard
                     isOpen={true}
-                    connector={editingConnector}
                     onClose={() => setEditingConnector(null)}
-                    onSubmit={handleEditSubmit}
+                    onSubmit={(data) => handleEditSubmit(editingConnector.id, data)}
+                    initialData={editingConnector}
                 />
             )}
         </>

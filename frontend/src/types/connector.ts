@@ -32,14 +32,27 @@ export interface TableMetadata {
     columns: ColumnMetadata[];
 }
 
-export interface Connector {
+export interface ViewInfo {
+    host: string;
+    port: number;
+    schema: string;
+    username: string;
+    databaseName: string;
+}
+
+export interface ConnectorSummary {
     id: string;
     name: string;
     type: 'DATABASE' | 'API' | 'FILE_SYSTEM';
     status: 'INIT' | 'APPROVED' | 'REJECTED';
     createdAt: string;
+    isActive: boolean;
+}
+
+export interface Connector extends ConnectorSummary {
     config?: Record<string, unknown>;
     registeredTables?: TableMetadata[];
+    viewInfo?: ViewInfo;
 }
 
 export interface ConnectorStats {

@@ -36,24 +36,34 @@ public class ConnectorMetadataServiceImpl implements ConnectorMetadataService {
 
     @Override
     public List<TableMetadata> fetchTables(Connector connector) {
-        return testConnectionAndFetchTables(connector.getConfig().getConfigMap());
+        return testConnectionAndFetchTables(connector);
+    }
+
+    @Override
+    public List<TableMetadata> testConnectionAndFetchTables(Connector connector) {
+        DataSource dataSource = dataSourceFactory.createDataSource(connector);
+        String schema = (String) connector.getConfig().getConfigMap()
+                .getOrDefault(FieldNames.SCHEMA, FieldNames.DEFAULT_SCHEMA);
+        
+        return fetchTablesWithDataSource(dataSource, schema);
     }
 
     @Override
     public List<TableMetadata> testConnectionAndFetchTables(Map<String, Object> config) {
-        // Create a transient connector object to reuse DataSourceFactory logic
+        // Create a transient connector object for new connector creation
         Connector tempConnector = Connector.create(
                 ConnectorId.generate(),
-                "Temp Connection",
+                "Test Connection",
                 ConnectorType.database(),
                 new ConnectionConfig(config),
-                "temp-tenant"
+                "mockup-tenant"
         );
 
-        DataSource dataSource = dataSourceFactory.createDataSource(tempConnector);
-        Jdbi jdbi = Jdbi.create(dataSource);
+        return testConnectionAndFetchTables(tempConnector);
+    }
 
-        String schema = (String) config.getOrDefault(FieldNames.SCHEMA, FieldNames.DEFAULT_SCHEMA);
+    private List<TableMetadata> fetchTablesWithDataSource(DataSource dataSource, String schema) {
+        Jdbi jdbi = Jdbi.create(dataSource);
 
         try {
             return fetchTablesFromDatabase(jdbi, schema);

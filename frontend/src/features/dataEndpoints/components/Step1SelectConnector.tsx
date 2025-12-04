@@ -58,7 +58,11 @@ export const Step1SelectConnector: React.FC<Step1SelectConnectorProps> = ({
                                 />
                                 <div>
                                     <h3 className="font-medium text-white">{connector.name}</h3>
-                                    <p className="text-xs text-text-tertiary">{connector.type}</p>
+                                    <p className="text-xs text-text-tertiary">
+                                        {typeof connector.type === 'string'
+                                            ? connector.type
+                                            : (connector.type as any)?.type || 'Unknown'}
+                                    </p>
                                 </div>
                             </div>
                             {getStatusBadge()}

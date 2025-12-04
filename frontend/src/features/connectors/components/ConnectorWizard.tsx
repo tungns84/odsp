@@ -1,24 +1,58 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { WizardStep1ConnectionDetails } from './WizardStep1ConnectionDetails';
 import { WizardStep2TableSelection } from './WizardStep2TableSelection';
 import type { WizardStep1FormValues, TableSelectionFormValues } from '../schemas';
 import type { Connector, TableMetadata } from '../../../types/connector';
+import { connectorService } from '../../../services/connectorService';
 
 interface ConnectorWizardProps {
     isOpen: boolean;
     onClose: () => void;
-    onSubmit: (data: Omit<Connector, 'id' | 'status' | 'createdAt'>) => void;
+    onSubmit: (data: Omit<Connector, 'id' | 'status' | 'createdAt' | 'tenantId'>) => void;
+    initialData?: Connector; // Can be summary or detail
 }
 
 export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     isOpen,
     onClose,
-    onSubmit
+    onSubmit,
+    initialData
 }) => {
     const [step, setStep] = useState(1);
     const [step1Data, setStep1Data] = useState<Partial<WizardStep1FormValues>>({});
     const [availableTables, setAvailableTables] = useState<TableMetadata[]>([]);
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
+
+    // Fetch full details if initialData is provided (edit mode)
+    useEffect(() => {
+        const fetchDetails = async () => {
+            if (isOpen && initialData?.id) {
+                setIsLoading(true);
+                try {
+                    const response = await connectorService.getById(initialData.id);
+                    const fullConnector = response.data;
+                    setStep1Data({
+                        name: fullConnector.name,
+                        type: fullConnector.type,
+                        config: fullConnector.config as any
+                    });
+                    // availableTables will be populated when user clicks Next in Step 1 (triggers test connection)
+                } catch (error) {
+                    console.error('Failed to fetch connector details:', error);
+                } finally {
+                    setIsLoading(false);
+                }
+            } else if (isOpen && !initialData) {
+                // Reset for create mode
+                setStep1Data({});
+                setAvailableTables([]);
+                setStep(1);
+            }
+        };
+
+        fetchDetails();
+    }, [isOpen, initialData]);
 
     const handleStep1Next = (data: WizardStep1FormValues, tables: TableMetadata[]) => {
         setStep1Data(data);
@@ -34,8 +68,9 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
             await onSubmit({
                 name: step1Data.name,
                 type: step1Data.type,
-                config: step1Data.config,
-                registeredTables: data.registeredTables
+                config: step1Data.config!,
+                registeredTables: data.registeredTables,
+                isActive: initialData?.isActive ?? true
             });
             // Reset and close
             setStep(1);
@@ -57,7 +92,7 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
     };
 
     // Handle Escape key
-    React.useEffect(() => {
+    useEffect(() => {
         const handleEscape = (e: KeyboardEvent) => {
             if (e.key === 'Escape') {
                 handleClose();
@@ -75,11 +110,24 @@ export const ConnectorWizard: React.FC<ConnectorWizardProps> = ({
 
     if (!isOpen) return null;
 
+    if (isLoading) {
+        return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
+                <div className="flex flex-col items-center gap-4 text-white">
+                    <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary border-t-transparent"></div>
+                    <p>Loading connector details...</p>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm">
             <div className="w-full max-w-3xl rounded-xl border border-surface-border-subtle bg-surface p-6 shadow-xl h-[85vh] flex flex-col">
                 <div className="mb-6">
-                    <h2 className="text-xl font-bold text-white mb-2">Create New Connector</h2>
+                    <h2 className="text-xl font-bold text-white mb-2">
+                        {initialData ? 'Edit Connector' : 'Create New Connector'}
+                    </h2>
 
                     {/* Stepper */}
                     <div className="flex items-center gap-4 text-sm">

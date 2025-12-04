@@ -53,7 +53,7 @@ export const DataEndpointDetails: React.FC = () => {
             });
         } catch (err: any) {
             console.error('Test failed:', err);
-            alert(err.response?.data?.error || 'Failed to test endpoint');
+            alert(err.response?.data?.code || err.response?.data?.error || 'Failed to test endpoint');
         } finally {
             setIsTesting(false);
         }

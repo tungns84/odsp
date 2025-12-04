@@ -39,7 +39,7 @@ export const Step4Preview: React.FC<Step4PreviewProps> = ({
                 });
             } catch (err: any) {
                 console.error('Preview failed:', err);
-                setError(err.response?.data?.error || err.response?.data?.message || 'Failed to load preview data.');
+                setError(err.response?.data?.code || err.response?.data?.error || err.response?.data?.message || 'Failed to load preview data.');
             } finally {
                 setLoading(false);
             }

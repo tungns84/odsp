@@ -43,13 +43,16 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
         );
     };
 
-    const getTypeLabel = (type: Connector['type']) => {
-        const typeLabels = {
+    const getTypeLabel = (type: Connector['type'] | { type?: string }) => {
+        const typeLabels: Record<string, string> = {
             DATABASE: 'Database',
             API: 'API',
             FILE_SYSTEM: 'File System'
         };
-        return typeLabels[type];
+
+        // Handle both string and object format
+        const typeStr = typeof type === 'string' ? type : (type as any)?.type || 'Unknown';
+        return typeLabels[typeStr] || typeStr;
     };
 
     return (
