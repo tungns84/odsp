@@ -1,7 +1,7 @@
 package com.gs.dsp.dataaccess.infrastructure.secondary.dialect;
 
-import com.gs.dsp.dataaccess.infrastructure.secondary.query.DynamicQueryService.FieldDefinition;
-import com.gs.dsp.dataaccess.infrastructure.secondary.query.DynamicQueryService.MaskingConfig;
+import com.gs.dsp.dataaccess.domain.model.FieldDefinition;
+import com.gs.dsp.dataaccess.domain.model.MaskingConfig;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,10 +19,10 @@ public class PostgreSqlDialect implements SqlDialect {
         
         MaskingConfig masking = field.getMasking();
         if (masking != null && masking.isEnabled()) {
-            if ("FIXED".equalsIgnoreCase(masking.getType())) {
+            if (masking.isFixed()) {
                 String replacement = masking.getReplacement() != null ? masking.getReplacement() : "*****";
                 return String.format("'%s' AS %s", replacement, alias);
-            } else if ("REGEX".equalsIgnoreCase(masking.getType())) {
+            } else if (masking.isRegex()) {
                 // REGEXP_REPLACE(source, pattern, replacement, flags)
                 // Postgres uses 'g' flag for global replacement
                 return String.format("REGEXP_REPLACE(%s, '%s', '%s', 'g') AS %s", 

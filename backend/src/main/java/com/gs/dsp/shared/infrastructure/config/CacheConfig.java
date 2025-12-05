@@ -1,6 +1,7 @@
 package com.gs.dsp.shared.infrastructure.config;
 
 import com.gs.dsp.shared.kernel.constants.AppConstants;
+import com.gs.dsp.dataaccess.domain.model.FieldDefinition;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import org.springframework.context.annotation.Bean;
@@ -37,7 +38,7 @@ public class CacheConfig {
      * Max size: 500 entries
      */
     @Bean(name = "fieldDefinitionsCache")
-    public Cache<String, java.util.List<com.gs.dsp.dataaccess.infrastructure.secondary.query.DynamicQueryService.FieldDefinition>> fieldDefinitionsCache() {
+    public Cache<String, java.util.List<FieldDefinition>> fieldDefinitionsCache() {
         return Caffeine.newBuilder()
                 .maximumSize(500)
                 .expireAfterWrite(1, TimeUnit.HOURS)
@@ -45,3 +46,4 @@ public class CacheConfig {
                 .build();
     }
 }
+

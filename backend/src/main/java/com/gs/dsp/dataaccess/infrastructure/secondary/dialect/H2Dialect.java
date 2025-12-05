@@ -1,7 +1,7 @@
 package com.gs.dsp.dataaccess.infrastructure.secondary.dialect;
 
-import com.gs.dsp.dataaccess.infrastructure.secondary.query.DynamicQueryService.FieldDefinition;
-import com.gs.dsp.dataaccess.infrastructure.secondary.query.DynamicQueryService.MaskingConfig;
+import com.gs.dsp.dataaccess.domain.model.FieldDefinition;
+import com.gs.dsp.dataaccess.domain.model.MaskingConfig;
 import org.springframework.stereotype.Component;
 
 @Component
@@ -19,10 +19,10 @@ public class H2Dialect implements SqlDialect {
         
         MaskingConfig masking = field.getMasking();
         if (masking != null && masking.isEnabled()) {
-            if ("FIXED".equalsIgnoreCase(masking.getType())) {
+            if (masking.isFixed()) {
                 String replacement = masking.getReplacement() != null ? masking.getReplacement() : "*****";
                 return String.format("'%s' AS %s", replacement, alias);
-            } else if ("REGEX".equalsIgnoreCase(masking.getType())) {
+            } else if (masking.isRegex()) {
                 // H2 REGEXP_REPLACE syntax is similar to Postgres but flags might differ slightly in older versions
                 // For modern H2, REGEXP_REPLACE(input, regex, replacement) works.
                 return String.format("REGEXP_REPLACE(%s, '%s', '%s') AS %s", 

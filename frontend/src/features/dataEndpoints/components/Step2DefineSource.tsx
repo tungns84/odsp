@@ -10,6 +10,7 @@ interface Step2DefineSourceProps {
     tableName: string;
     customSQL: string;
     tables: TableMetadata[];
+    tablesLoading?: boolean;
     connectorId: string | null;
     onSourceTypeChange: (type: SourceType) => void;
     onTableNameChange: (name: string) => void;
@@ -21,6 +22,7 @@ export const Step2DefineSource: React.FC<Step2DefineSourceProps> = ({
     tableName,
     customSQL,
     tables,
+    tablesLoading = false,
     connectorId,
     onSourceTypeChange,
     onTableNameChange,
@@ -121,18 +123,25 @@ export const Step2DefineSource: React.FC<Step2DefineSourceProps> = ({
                     {sourceType === 'table' && (
                         <div className="mt-4 ml-7">
                             <label className="text-xs font-medium text-text-tertiary">Table Name</label>
-                            <select
-                                value={tableName}
-                                onChange={(e) => onTableNameChange(e.target.value)}
-                                className="mt-2 w-full rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                            >
-                                <option value="">Select a table...</option>
-                                {tables.map((table) => (
-                                    <option key={table.name} value={table.name}>
-                                        {table.displayName || table.name}
-                                    </option>
-                                ))}
-                            </select>
+                            {tablesLoading ? (
+                                <div className="mt-2 flex items-center gap-2 text-sm text-text-tertiary">
+                                    <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+                                    Loading tables...
+                                </div>
+                            ) : (
+                                <select
+                                    value={tableName}
+                                    onChange={(e) => onTableNameChange(e.target.value)}
+                                    className="mt-2 w-full rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                                >
+                                    <option value="">Select a table...</option>
+                                    {tables.map((table) => (
+                                        <option key={table.name} value={table.name}>
+                                            {table.displayName || table.name}
+                                        </option>
+                                    ))}
+                                </select>
+                            )}
                         </div>
                     )}
                 </label>

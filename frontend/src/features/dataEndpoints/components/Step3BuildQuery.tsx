@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import type { FilterCondition, SortConfig, ColumnMaskingConfig, MaskingType } from '../../../types/dataEndpoint';
 
 interface Step3BuildQueryProps {
@@ -16,6 +16,54 @@ interface Step3BuildQueryProps {
 
 const operators = ['=', '!=', '>', '<', '>=', '<=', 'LIKE', 'IN'] as const;
 
+// Preset patterns for partial masking
+const PRESET_PATTERNS = [
+    { id: 'showFirst4', label: 'Show First 4', pattern: 'ShowFirst4', preview: '1234******' },
+    { id: 'showLast4', label: 'Show Last 4', pattern: 'ShowLast4', preview: '******6789' },
+    { id: 'email', label: 'Email', pattern: '***@***.com', preview: 'j****e@email.com' },
+    { id: 'custom', label: 'Custom', pattern: '', preview: '' },
+];
+
+// Sample data for preview
+const SAMPLE_DATA: Record<string, string> = {
+    email: 'john.doe@example.com',
+    phone: '0123456789',
+    ssn: '123-45-6789',
+    default: 'SensitiveData123',
+};
+
+// Masking preview function (mirrors backend logic)
+const applyMaskingPreview = (value: string, type: MaskingType, pattern?: string): string => {
+    if (type === 'MASK_ALL') {
+        return '*****';
+    }
+    if (type === 'PARTIAL' && pattern) {
+        if (pattern.startsWith('ShowFirst')) {
+            const count = parseInt(pattern.substring(9)) || 0;
+            if (value.length <= count) return value;
+            return value.substring(0, count) + '*'.repeat(value.length - count);
+        }
+        if (pattern.startsWith('ShowLast')) {
+            const count = parseInt(pattern.substring(8)) || 0;
+            if (value.length <= count) return value;
+            return '*'.repeat(value.length - count) + value.substring(value.length - count);
+        }
+        if (pattern.includes('@')) {
+            const atIndex = value.indexOf('@');
+            if (atIndex > 0) {
+                const local = value.substring(0, atIndex);
+                const domain = value.substring(atIndex + 1);
+                const maskedLocal = local.length > 2
+                    ? local[0] + '****' + local[local.length - 1]
+                    : '****';
+                return maskedLocal + '@' + domain;
+            }
+        }
+        return pattern || '*****';
+    }
+    return value;
+};
+
 export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
     tableName,
     columns,
@@ -28,6 +76,8 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
     onSortOrderChange,
     onMaskingConfigChange,
 }) => {
+    const [expandedMasking, setExpandedMasking] = useState<string | null>(null);
+
     const handleColumnToggle = (column: string) => {
         if (selectedColumns.includes(column)) {
             onColumnsChange(selectedColumns.filter(c => c !== column));
@@ -51,12 +101,12 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
     };
 
     const handleAddMasking = () => {
-        // Add a new masking rule with first available column
         const availableColumn = selectedColumns.find(col => !maskingConfig[col]);
         if (availableColumn) {
             const newConfig = { ...maskingConfig };
             newConfig[availableColumn] = { type: 'MASK_ALL' };
             onMaskingConfigChange(newConfig);
+            setExpandedMasking(availableColumn);
         }
     };
 
@@ -64,6 +114,7 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
         const newConfig = { ...maskingConfig };
         delete newConfig[column];
         onMaskingConfigChange(newConfig);
+        if (expandedMasking === column) setExpandedMasking(null);
     };
 
     const handleMaskingFieldChange = (oldColumn: string, newColumn: string) => {
@@ -74,6 +125,7 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
             newConfig[newColumn] = rule;
         }
         onMaskingConfigChange(newConfig);
+        setExpandedMasking(newColumn);
     };
 
     const handleMaskingTypeChange = (column: string, type: MaskingType) => {
@@ -81,7 +133,15 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
         if (type === 'NONE') {
             delete newConfig[column];
         } else {
-            newConfig[column] = { type, pattern: type === 'PARTIAL' ? '***' : undefined };
+            newConfig[column] = { type, pattern: type === 'PARTIAL' ? 'ShowFirst4' : undefined };
+        }
+        onMaskingConfigChange(newConfig);
+    };
+
+    const handlePresetSelect = (column: string, pattern: string) => {
+        const newConfig = { ...maskingConfig };
+        if (newConfig[column]) {
+            newConfig[column] = { ...newConfig[column], pattern };
         }
         onMaskingConfigChange(newConfig);
     };
@@ -92,6 +152,14 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
             newConfig[column] = { ...newConfig[column], pattern };
         }
         onMaskingConfigChange(newConfig);
+    };
+
+    const getSampleValue = (column: string): string => {
+        const lowerCol = column.toLowerCase();
+        if (lowerCol.includes('email')) return SAMPLE_DATA.email;
+        if (lowerCol.includes('phone') || lowerCol.includes('tel')) return SAMPLE_DATA.phone;
+        if (lowerCol.includes('ssn') || lowerCol.includes('social')) return SAMPLE_DATA.ssn;
+        return SAMPLE_DATA.default;
     };
 
     // Generate SQL preview
@@ -226,66 +294,168 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
                 </div>
             </div>
 
-            {/* Masking Configuration */}
+            {/* Masking Configuration - Improved UI */}
             {selectedColumns.length > 0 && (
                 <div>
                     <div className="mb-3 flex items-center justify-between">
-                        <h3 className="text-sm font-semibold text-text-secondary">Data Masking</h3>
+                        <div className="flex items-center gap-2">
+                            <span className="material-symbols-outlined text-lg text-primary">security</span>
+                            <h3 className="text-sm font-semibold text-text-secondary">Data Masking</h3>
+                        </div>
                         <button
                             onClick={handleAddMasking}
-                            className="flex items-center gap-1 text-xs text-primary hover:text-primary/80"
+                            className="flex items-center gap-1 rounded-lg bg-primary/10 px-3 py-1.5 text-xs text-primary hover:bg-primary/20 disabled:opacity-50"
                             disabled={Object.keys(maskingConfig).length >= selectedColumns.length}
                         >
                             <span className="material-symbols-outlined text-sm">add</span>
-                            Add Masking
+                            Add Masking Rule
                         </button>
                     </div>
+
                     {Object.keys(maskingConfig).length === 0 ? (
-                        <p className="text-xs text-text-tertiary">No masking rules added</p>
+                        <div className="rounded-lg border border-dashed border-surface-border bg-surface/20 p-4 text-center">
+                            <span className="material-symbols-outlined mb-2 text-2xl text-text-tertiary">visibility_off</span>
+                            <p className="text-xs text-text-tertiary">No masking rules added. Click "Add Masking Rule" to protect sensitive data.</p>
+                        </div>
                     ) : (
-                        <div className="space-y-2">
-                            {Object.entries(maskingConfig).map(([column, rule]) => (
-                                <div key={column} className="flex gap-2">
-                                    <select
-                                        value={column}
-                                        onChange={(e) => handleMaskingFieldChange(column, e.target.value)}
-                                        className="flex-1 rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                        <div className="space-y-3">
+                            {Object.entries(maskingConfig).map(([column, rule]) => {
+                                const isExpanded = expandedMasking === column;
+                                const sampleValue = getSampleValue(column);
+                                const maskedValue = applyMaskingPreview(sampleValue, rule.type, rule.pattern);
+
+                                return (
+                                    <div
+                                        key={column}
+                                        className="rounded-xl border border-surface-border bg-surface/30 overflow-hidden"
                                     >
-                                        {selectedColumns.map((col) => (
-                                            <option
-                                                key={col}
-                                                value={col}
-                                                disabled={maskingConfig[col] && col !== column}
-                                            >
-                                                {col}
-                                            </option>
-                                        ))}
-                                    </select>
-                                    <select
-                                        value={rule.type}
-                                        onChange={(e) => handleMaskingTypeChange(column, e.target.value as MaskingType)}
-                                        className="w-40 rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                                    >
-                                        <option value="MASK_ALL">Mask All (****)</option>
-                                        <option value="PARTIAL">Partial Masking</option>
-                                    </select>
-                                    {rule.type === 'PARTIAL' && (
-                                        <input
-                                            type="text"
-                                            value={rule.pattern || ''}
-                                            onChange={(e) => handleMaskingPatternChange(column, e.target.value)}
-                                            placeholder="e.g., ***@***.com"
-                                            className="flex-1 rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
-                                        />
-                                    )}
-                                    <button
-                                        onClick={() => handleRemoveMasking(column)}
-                                        className="rounded-lg border border-red-500/50 px-3 py-2 text-red-400 hover:bg-red-500/10"
-                                    >
-                                        <span className="material-symbols-outlined text-lg">delete</span>
-                                    </button>
-                                </div>
-                            ))}
+                                        {/* Header */}
+                                        <div
+                                            className="flex items-center justify-between p-3 cursor-pointer hover:bg-surface/50"
+                                            onClick={() => setExpandedMasking(isExpanded ? null : column)}
+                                        >
+                                            <div className="flex items-center gap-3">
+                                                <span className="material-symbols-outlined text-lg text-amber-400">
+                                                    {rule.type === 'MASK_ALL' ? 'lock' : 'lock_open'}
+                                                </span>
+                                                <div>
+                                                    <span className="text-sm font-medium text-white">{column}</span>
+                                                    <span className="ml-2 text-xs text-text-tertiary">
+                                                        {rule.type === 'MASK_ALL' ? 'Full Mask' : `Partial: ${rule.pattern}`}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="text-xs text-green-400 font-mono">{maskedValue}</span>
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleRemoveMasking(column); }}
+                                                    className="p-1 text-red-400 hover:bg-red-500/10 rounded"
+                                                >
+                                                    <span className="material-symbols-outlined text-lg">close</span>
+                                                </button>
+                                            </div>
+                                        </div>
+
+                                        {/* Expanded Content */}
+                                        {isExpanded && (
+                                            <div className="border-t border-surface-border p-4 space-y-4 bg-surface/20">
+                                                {/* Column Selector */}
+                                                <div>
+                                                    <label className="block text-xs text-text-tertiary mb-1">Column</label>
+                                                    <select
+                                                        value={column}
+                                                        onChange={(e) => handleMaskingFieldChange(column, e.target.value)}
+                                                        className="w-full rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white focus:border-primary focus:outline-none"
+                                                    >
+                                                        {selectedColumns.map((col) => (
+                                                            <option
+                                                                key={col}
+                                                                value={col}
+                                                                disabled={maskingConfig[col] && col !== column}
+                                                            >
+                                                                {col}
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+
+                                                {/* Masking Type */}
+                                                <div>
+                                                    <label className="block text-xs text-text-tertiary mb-2">Masking Type</label>
+                                                    <div className="flex gap-2">
+                                                        <button
+                                                            onClick={() => handleMaskingTypeChange(column, 'MASK_ALL')}
+                                                            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-all ${rule.type === 'MASK_ALL'
+                                                                    ? 'border-primary bg-primary/20 text-primary'
+                                                                    : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                }`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">lock</span>
+                                                            Full Mask
+                                                        </button>
+                                                        <button
+                                                            onClick={() => handleMaskingTypeChange(column, 'PARTIAL')}
+                                                            className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-all ${rule.type === 'PARTIAL'
+                                                                    ? 'border-primary bg-primary/20 text-primary'
+                                                                    : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                }`}
+                                                        >
+                                                            <span className="material-symbols-outlined text-lg">lock_open</span>
+                                                            Partial Mask
+                                                        </button>
+                                                    </div>
+                                                </div>
+
+                                                {/* Preset Patterns (for PARTIAL only) */}
+                                                {rule.type === 'PARTIAL' && (
+                                                    <div>
+                                                        <label className="block text-xs text-text-tertiary mb-2">Pattern Presets</label>
+                                                        <div className="flex flex-wrap gap-2">
+                                                            {PRESET_PATTERNS.map((preset) => (
+                                                                <button
+                                                                    key={preset.id}
+                                                                    onClick={() => handlePresetSelect(column, preset.pattern)}
+                                                                    className={`rounded-lg border px-3 py-1.5 text-xs transition-all ${rule.pattern === preset.pattern
+                                                                            ? 'border-primary bg-primary/20 text-primary'
+                                                                            : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                        }`}
+                                                                >
+                                                                    {preset.label}
+                                                                    {preset.preview && (
+                                                                        <span className="ml-1 text-text-tertiary">({preset.preview})</span>
+                                                                    )}
+                                                                </button>
+                                                            ))}
+                                                        </div>
+
+                                                        {/* Custom Pattern Input */}
+                                                        <div className="mt-3">
+                                                            <label className="block text-xs text-text-tertiary mb-1">Custom Pattern</label>
+                                                            <input
+                                                                type="text"
+                                                                value={rule.pattern || ''}
+                                                                onChange={(e) => handleMaskingPatternChange(column, e.target.value)}
+                                                                placeholder="e.g., ShowFirst4, ShowLast4, ***@***.com"
+                                                                className="w-full rounded-lg border border-surface-border bg-surface-elevated/50 px-3 py-2 text-sm text-white placeholder-text-tertiary focus:border-primary focus:outline-none"
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                {/* Live Preview */}
+                                                <div className="rounded-lg border border-surface-border bg-surface/50 p-3">
+                                                    <label className="block text-xs text-text-tertiary mb-2">Preview</label>
+                                                    <div className="flex items-center gap-3 font-mono text-sm">
+                                                        <span className="text-white">{sampleValue}</span>
+                                                        <span className="material-symbols-outlined text-lg text-text-tertiary">arrow_forward</span>
+                                                        <span className="text-green-400">{maskedValue}</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
                         </div>
                     )}
                 </div>

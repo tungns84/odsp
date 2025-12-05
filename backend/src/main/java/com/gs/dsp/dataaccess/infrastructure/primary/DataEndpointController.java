@@ -76,7 +76,7 @@ public class DataEndpointController {
             QueryDefinition queryDef = mapper.convertValue(queryConfigMap, QueryDefinition.class);
 
             // Execute test query
-            DynamicQueryService.TestQueryResult result = dynamicQueryService.executeTestQuery(
+            com.gs.dsp.dataaccess.infrastructure.primary.dto.TestQueryResult result = dynamicQueryService.executeTestQuery(
                     connector,
                     queryDef
             );

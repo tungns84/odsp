@@ -61,14 +61,19 @@ export const CreateDataEndpointWizard: React.FC = () => {
         }
     };
 
-    // Load tables for the selected connector - use only registered tables
-    const loadTables = (connectorId: string) => {
-        const connector = connectors.find(c => c.id === connectorId);
-        if (connector && connector.registeredTables) {
-            setTables(connector.registeredTables);
-        } else {
+    // Load tables for the selected connector - call API for registered tables
+    const [tablesLoading, setTablesLoading] = useState<boolean>(false);
+
+    const loadTables = async (connectorId: string) => {
+        try {
+            setTablesLoading(true);
+            const response = await connectorService.getTables(connectorId);
+            setTables(response.data);
+        } catch (err) {
+            console.error('Failed to load tables:', err);
             setTables([]);
-            console.warn(`Connector ${connectorId} has no registered tables`);
+        } finally {
+            setTablesLoading(false);
         }
     };
 
@@ -78,22 +83,18 @@ export const CreateDataEndpointWizard: React.FC = () => {
     }, []);
 
     // Resolve the name of a pre‑selected connector once we have the list
+    // (For pre-selected connector, we load tables when entering step 2)
     useEffect(() => {
         if (preSelectedConnectorId && connectors.length > 0) {
             const conn = connectors.find(c => c.id === preSelectedConnectorId);
             if (conn) {
                 setPreSelectedConnectorName(conn.name);
-                loadTables(preSelectedConnectorId);
             }
         }
     }, [preSelectedConnectorId, connectors]);
 
-    // Load tables when connector is selected in step 1
-    useEffect(() => {
-        if (wizardState.selectedConnectorId && !preSelectedConnectorId && connectors.length > 0) {
-            loadTables(wizardState.selectedConnectorId);
-        }
-    }, [wizardState.selectedConnectorId, preSelectedConnectorId, connectors]);
+    // Note: Tables are now loaded when entering Step 2, not on connector selection
+    // This avoids unnecessary API calls if user clicks multiple connectors
 
     // ---------------------------------------------------------------------
     // Navigation helpers (unchanged logic, only state shape matters)
@@ -146,6 +147,11 @@ export const CreateDataEndpointWizard: React.FC = () => {
         if (wizardState.currentStep === 3 && wizardState.selectedColumns.length === 0) {
             alert('Please select at least one column');
             return;
+        }
+
+        // Load tables when moving from Step 1 to Step 2
+        if (wizardState.currentStep === 1 && wizardState.selectedConnectorId) {
+            loadTables(wizardState.selectedConnectorId);
         }
 
         // Skip step 3 when using custom SQL
@@ -238,6 +244,7 @@ export const CreateDataEndpointWizard: React.FC = () => {
                         tableName={wizardState.tableName}
                         customSQL={wizardState.customSQL}
                         tables={tables}
+                        tablesLoading={tablesLoading}
                         connectorId={wizardState.selectedConnectorId}
                         onSourceTypeChange={type => setWizardState(prev => ({ ...prev, sourceType: type }))}
                         onTableNameChange={name => setWizardState(prev => ({ ...prev, tableName: name, selectedColumns: [] }))}

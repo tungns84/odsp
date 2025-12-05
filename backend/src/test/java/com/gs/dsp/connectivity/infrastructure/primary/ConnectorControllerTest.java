@@ -159,8 +159,14 @@ public class ConnectorControllerTest {
                         .content(updateJson))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.name").value("Updated DB"))
-                .andExpect(jsonPath("$.registeredTables.length()").value(1))
-                .andExpect(jsonPath("$.registeredTables[0].name").value("products"));
+                // registeredTables is lazy loaded via /api/v1/connectors/{id}/tables, so null in response
+                .andExpect(jsonPath("$.registeredTables").doesNotExist());
+
+        // Verify registeredTables persisted by checking entity directly
+        Connector updated = connectorRepository.findById(connector.getId()).orElseThrow();
+        assert updated.getRegisteredTables() != null;
+        assert updated.getRegisteredTables().size() == 1;
+        assert updated.getRegisteredTables().get(0).getName().equals("products");
     }
 
     @Test
