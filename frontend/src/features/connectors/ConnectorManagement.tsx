@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { StatsCards } from './components/StatsCards';
 import { ConnectorFilters } from './components/ConnectorFilters';
@@ -6,9 +6,9 @@ import { ConnectorTable } from './components/ConnectorTable';
 import { ConnectorWizard } from './components/ConnectorWizard';
 import { ConnectorDetails } from './components/ConnectorDetails';
 
-import type { Connector, ConnectorStats, ConnectorFilters as ConnectorFiltersType } from '../../types/connector';
+import type { Connector, ConnectorStats, ConnectorFilters as ConnectorFiltersType } from '../../types/connectorTypes';
 import { mockAuditLogs } from '../../data';
-import { connectorService } from '../../services';
+import { useConnectors } from '../../hooks/useConnectors';
 
 const initialFilters: ConnectorFiltersType = {
     search: '',
@@ -19,126 +19,141 @@ const initialFilters: ConnectorFiltersType = {
 
 export const ConnectorManagement: React.FC = () => {
     const navigate = useNavigate();
-    const [connectors, setConnectors] = useState<Connector[]>([]);
+    const {
+        connectors,
+        loading,
+        error,
+        refresh,
+        createConnector,
+        updateConnector,
+        deleteConnector,
+        approveConnector,
+        rejectConnector
+    } = useConnectors();
+
     const [filters, setFilters] = useState<ConnectorFiltersType>(initialFilters);
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [selectedConnector, setSelectedConnector] = useState<Connector | null>(null);
     const [editingConnector, setEditingConnector] = useState<Connector | null>(null);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
 
-    // Fetch connectors on mount
-    useEffect(() => {
-        loadConnectors();
-    }, []);
-
-    const loadConnectors = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await connectorService.getAll();
-            setConnectors(response.data);
-        } catch (err) {
-            console.error('Failed to load connectors:', err);
-            setError('Failed to load connectors. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
-
-    const stats: ConnectorStats = {
+    // Memoize stats to avoid recalculation on every render
+    const stats = useMemo<ConnectorStats>(() => ({
         total: connectors.length,
         active: connectors.filter(c => c.status === 'APPROVED').length,
         pendingApproval: connectors.filter(c => c.status === 'INIT').length
-    };
+    }), [connectors]);
 
-    const filteredConnectors = connectors.filter(connector => {
-        if (filters.search && !connector.name.toLowerCase().includes(filters.search.toLowerCase())) {
-            return false;
-        }
-        if (filters.type && connector.type !== filters.type) {
-            return false;
-        }
-        if (filters.status && connector.status !== filters.status) {
-            return false;
-        }
-        if (filters.createdDate && connector.createdAt !== filters.createdDate) {
-            return false;
-        }
-        return true;
-    });
+    // Memoize filtered connectors - only recalculate when connectors or filters change
+    const filteredConnectors = useMemo(() =>
+        connectors.filter(connector => {
+            if (filters.search && !connector.name.toLowerCase().includes(filters.search.toLowerCase())) {
+                return false;
+            }
+            if (filters.type && connector.type !== filters.type) {
+                return false;
+            }
+            if (filters.status && connector.status !== filters.status) {
+                return false;
+            }
+            if (filters.createdDate && connector.createdAt !== filters.createdDate) {
+                return false;
+            }
+            return true;
+        }),
+        [connectors, filters]
+    );
 
-    const handleClearFilters = () => {
+    // Stable callbacks using useCallback
+    const handleClearFilters = useCallback(() => {
         setFilters(initialFilters);
-    };
+    }, []);
 
-    const handleView = (id: string) => {
+    const handleView = useCallback((id: string) => {
         const connector = connectors.find(c => c.id === id);
         if (connector) {
             setSelectedConnector(connector);
         }
-    };
+    }, [connectors]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         try {
-            await connectorService.delete(id);
-            setConnectors(prev => prev.filter(c => c.id !== id));
+            await deleteConnector(id);
             setSelectedConnector(null);
         } catch (err) {
-            console.error('Failed to delete connector:', err);
             alert('Failed to delete connector. Please try again.');
         }
-    };
+    }, [deleteConnector]);
 
-    const handleApprove = async (id: string) => {
+    const handleApprove = useCallback(async (id: string) => {
         try {
-            const response = await connectorService.updateApprovalStatus(id, 'APPROVED');
-            setConnectors(prev => prev.map(c => c.id === id ? response.data : c));
+            await approveConnector(id);
         } catch (err) {
-            console.error('Failed to approve connector:', err);
             alert('Failed to approve connector. Please try again.');
         }
-    };
+    }, [approveConnector]);
 
-    const handleReject = async (id: string) => {
+    const handleReject = useCallback(async (id: string) => {
         try {
-            const response = await connectorService.updateApprovalStatus(id, 'REJECTED');
-            setConnectors(prev => prev.map(c => c.id === id ? response.data : c));
+            await rejectConnector(id);
         } catch (err) {
-            console.error('Failed to reject connector:', err);
             alert('Failed to reject connector. Please try again.');
         }
-    };
+    }, [rejectConnector]);
 
-    const handleCreateSubmit = async (data: Omit<Connector, 'id' | 'status' | 'createdAt' | 'tenantId'>) => {
+    const handleCreateSubmit = useCallback(async (data: Omit<Connector, 'id' | 'status' | 'createdAt' | 'tenantId'>) => {
         try {
-            const response = await connectorService.create(data);
-            setConnectors(prev => [response.data, ...prev]);
+            await createConnector(data);
             setIsCreateModalOpen(false);
         } catch (err) {
-            console.error('Failed to create connector:', err);
             alert('Failed to create connector. Please try again.');
         }
-    };
+    }, [createConnector]);
 
-    const handleEdit = (id: string) => {
+    const handleEdit = useCallback((id: string) => {
         const connector = connectors.find(c => c.id === id);
         if (connector) {
             setEditingConnector(connector);
             setSelectedConnector(null);
         }
-    };
+    }, [connectors]);
 
-    const handleEditSubmit = async (id: string, data: Omit<Connector, 'id' | 'status' | 'createdAt' | 'tenantId'>) => {
+    const handleEditSubmit = useCallback(async (id: string, data: Omit<Connector, 'id' | 'status' | 'createdAt' | 'tenantId'>) => {
         try {
-            const response = await connectorService.update(id, data);
-            setConnectors(prev => prev.map(c => c.id === id ? response.data : c));
+            await updateConnector(id, data);
             setEditingConnector(null);
         } catch (err) {
-            console.error('Failed to update connector:', err);
             alert('Failed to update connector. Please try again.');
         }
-    };
+    }, [updateConnector]);
+
+    // Stable callbacks for inline JSX handlers
+    const handleNavigateCreateEndpoint = useCallback(() => {
+        navigate('/data-endpoints/create');
+    }, [navigate]);
+
+    const handleOpenCreateModal = useCallback(() => {
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleCloseCreateModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleCloseDetails = useCallback(() => {
+        setSelectedConnector(null);
+    }, []);
+
+    const handleCloseEditWizard = useCallback(() => {
+        setEditingConnector(null);
+    }, []);
+
+    const handleTestConnection = useCallback((id: string) => {
+        console.log('Test connection:', id);
+    }, []);
+
+    const handleCreateEndpointFromDetails = useCallback((connectorId: string) => {
+        navigate(`/data-endpoints/create?connectorId=${connectorId}`);
+    }, [navigate]);
 
     return (
         <>
@@ -147,14 +162,14 @@ export const ConnectorManagement: React.FC = () => {
                 <h1 className="text-2xl font-bold text-white">Connector Management</h1>
                 <div className="flex gap-3">
                     <button
-                        onClick={() => navigate('/data-endpoints/create')}
+                        onClick={handleNavigateCreateEndpoint}
                         className="flex items-center gap-2 rounded-lg border border-primary bg-primary/10 px-4 py-2 text-sm font-bold text-primary hover:bg-primary/20"
                     >
                         <span className="material-symbols-outlined text-lg">add_circle</span>
                         Create Data Endpoint
                     </button>
                     <button
-                        onClick={() => setIsCreateModalOpen(true)}
+                        onClick={handleOpenCreateModal}
                         className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90"
                     >
                         <span className="material-symbols-outlined text-lg">add</span>
@@ -186,7 +201,7 @@ export const ConnectorManagement: React.FC = () => {
                             <p className="text-sm text-red-400">{error}</p>
                         </div>
                         <button
-                            onClick={loadConnectors}
+                            onClick={refresh}
                             className="ml-auto rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30"
                         >
                             Retry
@@ -218,7 +233,7 @@ export const ConnectorManagement: React.FC = () => {
             {/* Create Wizard */}
             <ConnectorWizard
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                onClose={handleCloseCreateModal}
                 onSubmit={handleCreateSubmit}
             />
 
@@ -227,17 +242,13 @@ export const ConnectorManagement: React.FC = () => {
                 <ConnectorDetails
                     connector={selectedConnector}
                     auditLogs={mockAuditLogs}
-                    onClose={() => setSelectedConnector(null)}
+                    onClose={handleCloseDetails}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onApprove={handleApprove}
                     onReject={handleReject}
-                    onTestConnection={(id) => {
-                        console.log('Test connection:', id);
-                    }}
-                    onCreateEndpoint={(connectorId) => {
-                        navigate(`/data-endpoints/create?connectorId=${connectorId}`);
-                    }}
+                    onTestConnection={handleTestConnection}
+                    onCreateEndpoint={handleCreateEndpointFromDetails}
                 />
             )}
 
@@ -245,7 +256,7 @@ export const ConnectorManagement: React.FC = () => {
             {editingConnector && (
                 <ConnectorWizard
                     isOpen={true}
-                    onClose={() => setEditingConnector(null)}
+                    onClose={handleCloseEditWizard}
                     onSubmit={(data) => handleEditSubmit(editingConnector.id, data)}
                     initialData={editingConnector}
                 />

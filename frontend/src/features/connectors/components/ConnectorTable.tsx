@@ -1,5 +1,5 @@
-import React from 'react';
-import type { Connector } from '../../../types/connector';
+import { memo } from 'react';
+import type { Connector } from '../../../types/connectorTypes';
 
 interface ConnectorTableProps {
     connectors: Connector[];
@@ -9,13 +9,13 @@ interface ConnectorTableProps {
     onReject: (id: string) => void;
 }
 
-export const ConnectorTable: React.FC<ConnectorTableProps> = ({
+export const ConnectorTable = memo<ConnectorTableProps>(function ConnectorTable({
     connectors,
     onView,
     onDelete,
     onApprove,
     onReject
-}) => {
+}) {
     const getStatusBadge = (status: Connector['status']) => {
         const statusConfig = {
             APPROVED: {
@@ -121,4 +121,4 @@ export const ConnectorTable: React.FC<ConnectorTableProps> = ({
             </table>
         </div>
     );
-};
+});

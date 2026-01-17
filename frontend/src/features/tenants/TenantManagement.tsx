@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { tenantService } from '../../services/tenantService';
 import type { Tenant, TenantStatus } from '../../types/tenantTypes';
@@ -11,31 +11,30 @@ import { EditTenantModal } from './EditTenantModal';
 export function TenantManagement() {
     const navigate = useNavigate();
     const [tenants, setTenants] = useState<Tenant[]>([]);
-    const [filteredTenants, setFilteredTenants] = useState<Tenant[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchQuery, setSearchQuery] = useState('');
     const [statusFilter, setStatusFilter] = useState<TenantStatus | 'ALL'>('ALL');
     const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
     const [editingTenant, setEditingTenant] = useState<Tenant | null>(null);
 
-    const fetchTenants = async () => {
+    const fetchTenants = useCallback(async () => {
         setLoading(true);
         try {
             const response = await tenantService.getAllTenants();
             setTenants(response.data);
-            setFilteredTenants(response.data);
         } catch (error) {
             console.error('Failed to fetch tenants:', error);
         } finally {
             setLoading(false);
         }
-    };
-
-    useEffect(() => {
-        fetchTenants();
     }, []);
 
     useEffect(() => {
+        fetchTenants();
+    }, [fetchTenants]);
+
+    // Derived state using useMemo - replaces useEffect anti-pattern
+    const filteredTenants = useMemo(() => {
         let filtered = tenants;
 
         if (statusFilter !== 'ALL') {
@@ -43,27 +42,29 @@ export function TenantManagement() {
         }
 
         if (searchQuery) {
+            const query = searchQuery.toLowerCase();
             filtered = filtered.filter(t =>
-                t.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                (t.description && t.description.toLowerCase().includes(searchQuery.toLowerCase())) ||
-                t.id.toLowerCase().includes(searchQuery.toLowerCase())
+                t.name.toLowerCase().includes(query) ||
+                (t.description && t.description.toLowerCase().includes(query)) ||
+                t.id.toLowerCase().includes(query)
             );
         }
 
-        setFilteredTenants(filtered);
+        return filtered;
     }, [tenants, statusFilter, searchQuery]);
 
-    const handleCreateSuccess = () => {
+    // Stable callbacks using useCallback
+    const handleCreateSuccess = useCallback(() => {
         setIsCreateModalOpen(false);
         fetchTenants();
-    };
+    }, [fetchTenants]);
 
-    const handleEditSuccess = () => {
+    const handleEditSuccess = useCallback(() => {
         setEditingTenant(null);
         fetchTenants();
-    };
+    }, [fetchTenants]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (confirm('Are you sure you want to delete this tenant?')) {
             try {
                 await tenantService.deleteTenant(id);
@@ -73,9 +74,9 @@ export function TenantManagement() {
                 alert('Failed to delete tenant');
             }
         }
-    };
+    }, [fetchTenants]);
 
-    const handleToggleStatus = async (tenant: Tenant) => {
+    const handleToggleStatus = useCallback(async (tenant: Tenant) => {
         const newStatus = tenant.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
         try {
             await tenantService.updateTenantStatus(tenant.id, newStatus);
@@ -84,11 +85,23 @@ export function TenantManagement() {
             console.error('Failed to update tenant status:', error);
             alert('Failed to update tenant status');
         }
-    };
+    }, [fetchTenants]);
 
-    const handleManageKeys = (tenant: Tenant) => {
+    const handleManageKeys = useCallback((tenant: Tenant) => {
         navigate(`/tenants/${tenant.id}?tab=api-keys`);
-    };
+    }, [navigate]);
+
+    const handleOpenCreateModal = useCallback(() => {
+        setIsCreateModalOpen(true);
+    }, []);
+
+    const handleCloseCreateModal = useCallback(() => {
+        setIsCreateModalOpen(false);
+    }, []);
+
+    const handleCloseEditModal = useCallback(() => {
+        setEditingTenant(null);
+    }, []);
 
     return (
         <div className="p-6">
@@ -98,7 +111,7 @@ export function TenantManagement() {
                     <p className="text-text-secondary mt-1">Manage organization tenants and their settings</p>
                 </div>
                 <button
-                    onClick={() => setIsCreateModalOpen(true)}
+                    onClick={handleOpenCreateModal}
                     className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary-hover text-white rounded-lg transition-colors"
                 >
                     <span className="material-symbols-outlined">add</span>
@@ -126,13 +139,13 @@ export function TenantManagement() {
 
             <CreateTenantModal
                 isOpen={isCreateModalOpen}
-                onClose={() => setIsCreateModalOpen(false)}
+                onClose={handleCloseCreateModal}
                 onSuccess={handleCreateSuccess}
             />
 
             <EditTenantModal
                 isOpen={!!editingTenant}
-                onClose={() => setEditingTenant(null)}
+                onClose={handleCloseEditModal}
                 onSuccess={handleEditSuccess}
                 tenant={editingTenant}
             />

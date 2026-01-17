@@ -1,4 +1,4 @@
-import React, { createContext, useState, useEffect } from 'react';
+import React, { createContext, useState, useEffect, useMemo } from 'react';
 import type { ReactNode } from 'react';
 import type { ThemeColor, ThemeMode } from '../types/theme';
 import { DEFAULT_THEME, DEFAULT_MODE, MODE_STORAGE_KEY } from '../types/theme';
@@ -47,8 +47,14 @@ export const ThemeProvider: React.FC<ThemeProviderProps> = ({ children }) => {
         setModeState(newMode);
     };
 
+    // Memoize context value to prevent re-renders when value object is recreated
+    const contextValue = useMemo(
+        () => ({ theme, setTheme, mode, setMode }),
+        [theme, mode]
+    );
+
     return (
-        <ThemeContext.Provider value={{ theme, setTheme, mode, setMode }}>
+        <ThemeContext.Provider value={contextValue}>
             {children}
         </ThemeContext.Provider>
     );

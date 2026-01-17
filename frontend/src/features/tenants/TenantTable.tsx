@@ -1,4 +1,5 @@
-import React from 'react';
+
+import { memo } from 'react';
 import { Edit, Trash2, Power, Key } from 'lucide-react';
 import type { Tenant } from '../../types/tenantTypes';
 import { TenantStatusBadge } from './TenantStatusBadge';
@@ -12,7 +13,7 @@ interface Props {
     onManageKeys: (tenant: Tenant) => void;
 }
 
-export function TenantTable({ tenants, loading, onEdit, onDelete, onToggleStatus, onManageKeys }: Props) {
+export const TenantTable = memo<Props>(function TenantTable({ tenants, loading, onEdit, onDelete, onToggleStatus, onManageKeys }) {
     if (loading) {
         return (
             <div className="bg-surface border border-surface-border rounded-lg p-8 text-center">
@@ -114,4 +115,4 @@ export function TenantTable({ tenants, loading, onEdit, onDelete, onToggleStatus
             </div>
         </div>
     );
-}
+});
