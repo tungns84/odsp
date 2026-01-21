@@ -3,7 +3,7 @@ import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { WizardStep1Schema, type WizardStep1FormValues } from '../schemas';
 import { connectorService } from '../../../services';
-import type { TableMetadata } from '../../../types/connector';
+import type { TableMetadata } from '../../../types/connectorTypes';
 
 interface WizardStep1Props {
     initialValues: Partial<WizardStep1FormValues>;

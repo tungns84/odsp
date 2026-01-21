@@ -80,14 +80,14 @@ export const TenantTable = memo<Props>(function TenantTable({ tenants, loading, 
                                         <button
                                             onClick={() => onManageKeys(tenant)}
                                             className="p-2 hover:bg-surface-elevated rounded-lg transition-colors text-blue-500"
-                                            title="Manage API Keys"
+                                            aria-label="Manage API Keys"
                                         >
                                             <Key size={18} />
                                         </button>
                                         <button
                                             onClick={() => onEdit(tenant)}
                                             className="p-2 hover:bg-surface-elevated rounded-lg transition-colors text-primary"
-                                            title="Edit"
+                                            aria-label="Edit tenant"
                                         >
                                             <Edit size={18} />
                                         </button>
@@ -95,14 +95,14 @@ export const TenantTable = memo<Props>(function TenantTable({ tenants, loading, 
                                             onClick={() => onToggleStatus(tenant)}
                                             className={`p-2 hover:bg-surface-elevated rounded-lg transition-colors ${tenant.status === 'ACTIVE' ? 'text-yellow-500' : 'text-green-500'
                                                 }`}
-                                            title={tenant.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                                            aria-label={tenant.status === 'ACTIVE' ? 'Deactivate tenant' : 'Activate tenant'}
                                         >
                                             <Power size={18} />
                                         </button>
                                         <button
                                             onClick={() => onDelete(tenant.id)}
                                             className="p-2 hover:bg-surface-elevated rounded-lg transition-colors text-red-500"
-                                            title="Delete"
+                                            aria-label="Delete tenant"
                                         >
                                             <Trash2 size={18} />
                                         </button>

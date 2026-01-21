@@ -1,60 +1,112 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <!-- Property for log file location -->
+    <!-- Properties -->
     <property name="LOG_PATH" value="${LOG_PATH:-./logs}"/>
-    <property name="LOG_FILE" value="${LOG_FILE:-application}"/>
+    <property name="INSTANCE_ID" value="${INSTANCE_ID:-}"/>
+    <!-- LOG_FILE_PREFIX: set via -DLOG_FILE_PREFIX=application-1 or defaults to 'application' -->
+    <property name="LOG_FILE_PREFIX" value="${LOG_FILE_PREFIX:-application}"/>
+    <property name="SERVICE_NAME" value="${SERVICE_NAME:-dsp}"/>
+    <property name="ENVIRONMENT" value="${ENVIRONMENT:-dev}"/>
 
     <!-- Console Appender - Pattern format for development -->
     <appender name="CONSOLE_PATTERN" class="ch.qos.logback.core.ConsoleAppender">
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [traceId=%X{traceId:-}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
     </appender>
 
-    <!-- Console Appender - JSON format for production (log aggregation) -->
+    <!-- Console Appender - JSON format for Promtail/Fluentd -->
     <appender name="CONSOLE_JSON" class="ch.qos.logback.core.ConsoleAppender">
         <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <!-- Static fields for service identification -->
+            <customFields>{"service":"${SERVICE_NAME}","environment":"${ENVIRONMENT}"}</customFields>
+            
+            <!-- Include all MDC context -->
             <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
             <includeMdcKeyName>tenantId</includeMdcKeyName>
             <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>requestPath</includeMdcKeyName>
+            <includeMdcKeyName>httpMethod</includeMdcKeyName>
+            
+            <!-- Field naming optimized for log aggregation -->
             <fieldNames>
                 <timestamp>@timestamp</timestamp>
                 <message>message</message>
-                <logger>logger</logger>
-                <thread>thread</thread>
+                <logger>logger_name</logger>
+                <thread>thread_name</thread>
                 <level>level</level>
+                <levelValue>level_value</levelValue>
                 <stackTrace>stack_trace</stackTrace>
             </fieldNames>
+            
+            <!-- Include caller info for DEBUG level -->
+            <includeCallerData>false</includeCallerData>
+            
+            <!-- Short class names for readability -->
+            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
         </encoder>
     </appender>
 
-    <!-- Rolling File Appender with daily rotation and compression -->
+    <!-- Rolling File Appender - Text format for local debugging -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
-        <file>${LOG_PATH}/${LOG_FILE}.log</file>
+        <file>${LOG_PATH}/${LOG_FILE_PREFIX}.log</file>
         <encoder>
-            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [traceId=%X{traceId:-}] %-5level %logger{36} - %msg%n</pattern>
+            <pattern>%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] [%X{traceId:-},%X{spanId:-}] %-5level %logger{36} - %msg%n</pattern>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
-            <!-- Daily rollover with compression -->
-            <fileNamePattern>${LOG_PATH}/${LOG_FILE}.%d{yyyy-MM-dd}.gz</fileNamePattern>
-            <!-- Keep 30 days of history -->
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_PREFIX}.%d{yyyy-MM-dd}.gz</fileNamePattern>
             <maxHistory>30</maxHistory>
-            <!-- Total size cap of 3GB -->
+            <totalSizeCap>3GB</totalSizeCap>
+        </rollingPolicy>
+    </appender>
+
+    <!-- Rolling File Appender - JSON format for Promtail/Fluentd file scraping -->
+    <appender name="FILE_JSON" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <file>${LOG_PATH}/${LOG_FILE_PREFIX}-json.log</file>
+        <encoder class="net.logstash.logback.encoder.LogstashEncoder">
+            <customFields>{"service":"${SERVICE_NAME}","environment":"${ENVIRONMENT}"}</customFields>
+            <includeMdcKeyName>traceId</includeMdcKeyName>
+            <includeMdcKeyName>spanId</includeMdcKeyName>
+            <includeMdcKeyName>tenantId</includeMdcKeyName>
+            <includeMdcKeyName>userId</includeMdcKeyName>
+            <includeMdcKeyName>requestId</includeMdcKeyName>
+            <includeMdcKeyName>requestPath</includeMdcKeyName>
+            <includeMdcKeyName>httpMethod</includeMdcKeyName>
+            <fieldNames>
+                <timestamp>@timestamp</timestamp>
+                <message>message</message>
+                <logger>logger_name</logger>
+                <thread>thread_name</thread>
+                <level>level</level>
+                <levelValue>level_value</levelValue>
+                <stackTrace>stack_trace</stackTrace>
+            </fieldNames>
+            <shortenedLoggerNameLength>36</shortenedLoggerNameLength>
+        </encoder>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${LOG_PATH}/${LOG_FILE_PREFIX}-json.%d{yyyy-MM-dd}.gz</fileNamePattern>
+            <maxHistory>30</maxHistory>
             <totalSizeCap>3GB</totalSizeCap>
         </rollingPolicy>
     </appender>
 
     <!-- ==================== Profile-based Configuration ==================== -->
 
-    <!-- Development Profile: DEBUG level, pattern console output -->
+    <!-- Development Profile: DEBUG level, pattern console output + both file formats -->
     <springProfile name="dev,default">
         <root level="INFO">
             <appender-ref ref="CONSOLE_PATTERN"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="FILE_JSON"/><!-- JSON file for testing Promtail/Fluentd -->
         </root>
         
         <!-- Enable DEBUG for application packages in development -->
         <logger name="com.gs.dsp" level="DEBUG" additivity="false">
             <appender-ref ref="CONSOLE_PATTERN"/>
+            <appender-ref ref="FILE"/>
+            <appender-ref ref="FILE_JSON"/><!-- JSON file for testing -->
         </logger>
         
         <!-- Reduce noise from libraries -->
@@ -63,17 +115,17 @@
         <logger name="liquibase" level="INFO"/>
     </springProfile>
 
-    <!-- Production Profile: INFO level, JSON console + file with rotation -->
+    <!-- Production Profile: INFO level, JSON console + JSON file for Promtail/Fluentd -->
     <springProfile name="prod">
         <root level="INFO">
             <appender-ref ref="CONSOLE_JSON"/>
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="FILE_JSON"/>
         </root>
         
         <!-- Application packages at INFO in production (no DEBUG by default) -->
         <logger name="com.gs.dsp" level="INFO" additivity="false">
             <appender-ref ref="CONSOLE_JSON"/>
-            <appender-ref ref="FILE"/>
+            <appender-ref ref="FILE_JSON"/>
         </logger>
         
         <!-- Reduce noise from libraries -->

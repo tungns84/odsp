@@ -1,4 +1,4 @@
-import type { AuditLog } from '../types/connector';
+import type { AuditLog } from '../types/connectorTypes';
 
 export const mockAuditLogs: AuditLog[] = [
     {

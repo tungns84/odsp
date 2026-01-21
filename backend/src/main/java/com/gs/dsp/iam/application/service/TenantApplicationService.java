@@ -6,6 +6,7 @@ import com.gs.dsp.iam.domain.model.TenantStatus;
 import com.gs.dsp.iam.domain.repository.TenantRepository;
 import com.gs.dsp.shared.kernel.constants.ErrorMessages;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -14,6 +15,7 @@ import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class TenantApplicationService {
 
     private final TenantRepository tenantRepository;
@@ -28,6 +30,8 @@ public class TenantApplicationService {
 
     @Transactional
     public Tenant createTenant(String id, String name, String description) {
+        log.info("Creating tenant: id={}, name={}", id, name);
+        
         TenantId tenantId = new TenantId(id);
         if (tenantRepository.existsById(tenantId)) {
             throw new IllegalArgumentException(
@@ -35,11 +39,18 @@ public class TenantApplicationService {
             );
         }
         Tenant tenant = Tenant.create(tenantId, name, description);
-        return tenantRepository.save(tenant);
+        Tenant saved = tenantRepository.save(tenant);
+        
+        log.info("Tenant created successfully: id={}, name={}, status={}",
+            id, saved.getName(), saved.getStatus());
+        
+        return saved;
     }
 
     @Transactional
     public Tenant updateTenant(String id, String name, String description, TenantStatus status) {
+        log.info("Updating tenant: id={}, name={}, status={}", id, name, status);
+        
         TenantId tenantId = new TenantId(id);
         Tenant tenant = tenantRepository.findById(tenantId)
                 .orElseThrow(() -> new IllegalArgumentException(
@@ -56,11 +67,16 @@ public class TenantApplicationService {
             }
         }
         
-        return tenantRepository.save(tenant);
+        Tenant saved = tenantRepository.save(tenant);
+        log.info("Tenant updated: id={}, status={}", id, saved.getStatus());
+        
+        return saved;
     }
 
     @Transactional
     public void deleteTenant(String id) {
+        log.warn("Deleting tenant: id={}", id);
+        
         TenantId tenantId = new TenantId(id);
         if (!tenantRepository.existsById(tenantId)) {
             throw new IllegalArgumentException(
@@ -71,6 +87,7 @@ public class TenantApplicationService {
         // In DDD, we might prefer deactivating instead of deleting
         // But to keep parity with legacy service:
         tenantRepository.deleteById(tenantId);
+        log.info("Tenant deleted: id={}", id);
     }
 
     public List<Tenant> getTenantsByStatus(TenantStatus status) {

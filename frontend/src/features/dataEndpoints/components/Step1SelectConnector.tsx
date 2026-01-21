@@ -1,5 +1,5 @@
 import React from 'react';
-import type { Connector } from '../../../types/connector';
+import type { Connector } from '../../../types/connectorTypes';
 
 interface Step1SelectConnectorProps {
     connectors: Connector[];

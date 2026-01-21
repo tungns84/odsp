@@ -9,8 +9,8 @@ import { Step2DefineSource } from './components/Step2DefineSource';
 import { Step3BuildQuery } from './components/Step3BuildQuery';
 import { Step4Preview } from './components/Step4Preview';
 import { Step4Finalize } from './components/Step4Finalize';
-import type { WizardState, QueryConfig } from '../../types/dataEndpoint';
-import type { Connector, TableMetadata } from '../../types/connector';
+import type { WizardState, QueryConfig } from '../../types/dataEndpointTypes';
+import type { Connector, TableMetadata } from '../../types/connectorTypes';
 import { connectorService, dataEndpointService } from '../../services';
 
 export const CreateDataEndpointWizard: React.FC = () => {
@@ -68,7 +68,7 @@ export const CreateDataEndpointWizard: React.FC = () => {
         try {
             setTablesLoading(true);
             const response = await connectorService.getTables(connectorId);
-            setTables(response.data);
+            setTables(response.data || []);
         } catch (err) {
             console.error('Failed to load tables:', err);
             setTables([]);
@@ -92,6 +92,17 @@ export const CreateDataEndpointWizard: React.FC = () => {
             }
         }
     }, [preSelectedConnectorId, connectors]);
+
+    // Load tables if a connector is pre-selected
+    useEffect(() => {
+        if (preSelectedConnectorId) {
+            loadTables(preSelectedConnectorId);
+        }
+    }, [preSelectedConnectorId]);
+
+    // ...
+
+
 
     // Note: Tables are now loaded when entering Step 2, not on connector selection
     // This avoids unnecessary API calls if user clicks multiple connectors

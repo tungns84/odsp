@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import { useEffect } from 'react';
 import { X } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { tenantService } from '../../services/tenantService';
 import type { Tenant } from '../../types/tenantTypes';
+import { EditTenantSchema, type EditTenantFormValues } from './schemas';
+import { FormField, FormInput, FormTextarea } from '../../components/forms';
 
 interface Props {
     isOpen: boolean;
@@ -11,36 +15,46 @@ interface Props {
 }
 
 export function EditTenantModal({ isOpen, onClose, onSuccess, tenant }: Props) {
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+        setError
+    } = useForm<EditTenantFormValues>({
+        resolver: zodResolver(EditTenantSchema),
+        defaultValues: {
+            name: '',
+            description: '',
+            isActive: true
+        }
+    });
 
     useEffect(() => {
         if (tenant) {
-            setName(tenant.name);
-            setDescription(tenant.description || '');
+            reset({
+                name: tenant.name,
+                description: tenant.description || '',
+                isActive: tenant.status === 'ACTIVE'
+            });
         }
-    }, [tenant]);
+    }, [tenant, reset]);
 
     if (!isOpen || !tenant) return null;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
+    const onSubmit = async (data: EditTenantFormValues) => {
         try {
             await tenantService.updateTenant(tenant.id, {
-                name,
-                description,
-                status: tenant.status
+                name: data.name,
+                description: data.description || '',
+                status: data.isActive ? 'ACTIVE' : 'INACTIVE'
             });
             onSuccess();
+            onClose();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to update tenant');
-        } finally {
-            setLoading(false);
+            setError('root', {
+                message: err.response?.data?.message || 'Failed to update tenant'
+            });
         }
     };
 
@@ -54,37 +68,70 @@ export function EditTenantModal({ isOpen, onClose, onSuccess, tenant }: Props) {
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
-                        {error}
+                {errors.root && (
+                    <div className="mb-4 rounded-lg bg-error-bg border border-error-border p-3 text-sm text-error">
+                        {errors.root.message}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Tenant Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full rounded-lg border border-surface-border bg-surface-elevated px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
-                        />
-                    </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <Controller
+                        name="name"
+                        control={control}
+                        render={({ field }) => (
+                            <FormField
+                                label="Tenant Name"
+                                error={errors.name?.message}
+                                required
+                                htmlFor="edit-tenant-name"
+                            >
+                                <FormInput
+                                    {...field}
+                                    id="edit-tenant-name"
+                                    type="text"
+                                    error={!!errors.name}
+                                />
+                            </FormField>
+                        )}
+                    />
 
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Description
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={3}
-                            className="w-full rounded-lg border border-surface-border bg-surface-elevated px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
-                        />
-                    </div>
+                    <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                            <FormField
+                                label="Description"
+                                error={errors.description?.message}
+                                htmlFor="edit-tenant-description"
+                            >
+                                <FormTextarea
+                                    {...field}
+                                    id="edit-tenant-description"
+                                    rows={3}
+                                    error={!!errors.description}
+                                />
+                            </FormField>
+                        )}
+                    />
+
+                    <Controller
+                        name="isActive"
+                        control={control}
+                        render={({ field }) => (
+                            <div className="flex items-center gap-3">
+                                <input
+                                    type="checkbox"
+                                    id="edit-tenant-active"
+                                    checked={field.value}
+                                    onChange={field.onChange}
+                                    className="rounded border-surface-border text-primary focus:ring-focus-ring"
+                                />
+                                <label htmlFor="edit-tenant-active" className="text-sm font-medium text-text-secondary">
+                                    Active
+                                </label>
+                            </div>
+                        )}
+                    />
 
                     <div className="flex justify-end gap-3 mt-6">
                         <button
@@ -96,10 +143,10 @@ export function EditTenantModal({ isOpen, onClose, onSuccess, tenant }: Props) {
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={isSubmitting}
                             className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
                         >
-                            {loading ? 'Save Changes' : 'Save'}
+                            {isSubmitting ? 'Saving...' : 'Save Changes'}
                         </button>
                     </div>
                 </form>

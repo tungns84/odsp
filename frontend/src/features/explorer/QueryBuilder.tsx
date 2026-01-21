@@ -224,8 +224,9 @@ export function QueryBuilder({ table, onExecute, onSave, loading = false }: Quer
                                         <button
                                             onClick={() => handleRemoveFilter(index)}
                                             className="rounded-lg border border-error-border px-3 py-2 text-error hover:bg-error-bg"
+                                            aria-label="Remove filter"
                                         >
-                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                            <span className="material-symbols-outlined text-lg" aria-hidden="true">delete</span>
                                         </button>
                                     </div>
                                 ))}
@@ -290,8 +291,8 @@ export function QueryBuilder({ table, onExecute, onSave, loading = false }: Quer
                         <label className="block text-sm font-medium text-text-secondary mb-2">SQL Query</label>
                         <div className="rounded-lg border border-surface-border overflow-hidden">
                             <Suspense fallback={
-                                <div className="h-[300px] bg-surface-elevated animate-pulse flex items-center justify-center">
-                                    <span className="text-text-tertiary text-sm">Loading SQL Editor...</span>
+                                <div className="h-[300px] bg-surface-elevated animate-pulse flex items-center justify-center" role="status" aria-live="polite">
+                                    <span className="text-text-tertiary text-sm">Loading SQL Editor…</span>
                                 </div>
                             }>
                                 <MonacoEditor

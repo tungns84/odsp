@@ -4,6 +4,19 @@
 
 ---
 
+## [Sprint 7] - 2025-12-06
+### Backend
+#### Changed
+
+- Migrated manual TraceIdFilter to Micrometer Tracing
+- Updated GlobalExceptionHandler to use Tracer
+- Configured Logback to include spanId in logs
+#### Added
+- Integrated **Flowable Workflow Engine** (7.0.1)
+- Implemented Data Publishing Workflow (BPMN)
+- Added Workflow REST API for process/task management
+
+
 ## [beta-0.0.1] - 2025-12-05
 
 > 🎉 **First Beta Release** - DDD Migration & Code Quality Improvements
@@ -44,6 +57,33 @@
 ### Project Management
 - Sprint 5 completed: 29 story points (100%)
 - Overall project progress: 68%
+
+---
+
+## [Sprint 6] - 2025-12-05
+
+### Frontend
+#### Added
+- Query result pagination component
+- Error Boundaries for graceful error handling
+- Reusable custom hooks (useConnectors, useDataQuery, etc.)
+
+#### Changed
+- Refactored shared type definitions for better type safety
+- Cleaned up project structure
+
+### Backend
+#### Added
+- Structured logging to 4 application services (Connector, DataEndpoint, Tenant, ApiKey)
+- INFO logs for CREATE/UPDATE operations with business context
+- WARN logs for destructive operations (DELETE, REVOKE)
+- Security-conscious API key masking in logs
+
+#### Fixed
+- Connector creation API now accepts and saves `registeredTables` parameter
+
+### Tests
+- ✅ All connector tests passing (6/6)
 
 ---
 

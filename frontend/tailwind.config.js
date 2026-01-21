@@ -35,10 +35,21 @@ export default {
                 error: 'hsl(var(--color-error) / <alpha-value>)',
                 'error-bg': 'hsl(var(--color-error-bg) / <alpha-value>)',
                 'error-border': 'hsl(var(--color-error-border) / <alpha-value>)',
+                warning: 'hsl(var(--color-warning) / <alpha-value>)',
+                'warning-bg': 'hsl(var(--color-warning-bg) / <alpha-value>)',
+                'warning-border': 'hsl(var(--color-warning-border) / <alpha-value>)',
+                info: 'hsl(var(--color-info) / <alpha-value>)',
+                'info-bg': 'hsl(var(--color-info-bg) / <alpha-value>)',
+                'info-border': 'hsl(var(--color-info-border) / <alpha-value>)',
 
-                // Legacy support (will be migrated)
-                'background-light': '#f6f7f8',
-                'background-dark': '#101922',
+                // Muted/Disabled states
+                muted: 'hsl(var(--color-muted) / <alpha-value>)',
+                'muted-bg': 'hsl(var(--color-muted-bg) / <alpha-value>)',
+                disabled: 'hsl(var(--color-disabled) / <alpha-value>)',
+
+                // Interactive states
+                'focus-ring': 'hsl(var(--color-focus-ring) / <alpha-value>)',
+                'hover-overlay': 'hsl(var(--color-hover-overlay) / <alpha-value>)',
             },
             fontFamily: {
                 display: ['Inter', 'sans-serif'],

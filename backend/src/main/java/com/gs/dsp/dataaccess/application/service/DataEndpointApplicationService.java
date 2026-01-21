@@ -7,12 +7,16 @@ import com.gs.dsp.dataaccess.domain.model.DataEndpoint;
 import com.gs.dsp.dataaccess.domain.model.DataEndpointId;
 import com.gs.dsp.dataaccess.domain.repository.DataEndpointRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.gs.dsp.shared.domain.exception.BusinessException;
+import com.gs.dsp.shared.domain.exception.ResourceNotFoundException;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+
 
 /**
  * Application service for DataEndpoint aggregate.
@@ -20,6 +24,7 @@ import java.util.UUID;
  */
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class DataEndpointApplicationService {
     
     private final DataEndpointRepository dataEndpointRepository;
@@ -60,15 +65,18 @@ public class DataEndpointApplicationService {
             String fieldConfig,
             String tenantId) {
         
+        log.info("Creating data endpoint: name={}, pathAlias={}, connectorId={}, tenantId={}",
+            name, pathAlias, connectorIdStr, tenantId);
+        
         // Validate path alias uniqueness
         if (dataEndpointRepository.existsByPathAliasAndTenantId(pathAlias, tenantId)) {
-            throw new IllegalArgumentException("Path alias already exists: " + pathAlias);
+            throw new BusinessException("DUPLICATE_ALIAS", "Path alias already exists: " + pathAlias);
         }
         
         // Load connector
         ConnectorId connectorId = new ConnectorId(UUID.fromString(connectorIdStr));
         Connector connector = connectorRepository.findByIdAndTenantId(connectorId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Connector not found: " + connectorIdStr));
+                .orElseThrow(() -> new ResourceNotFoundException("Connector", connectorIdStr));
         
         // Create endpoint using factory method
         DataEndpointId id = DataEndpointId.generate();
@@ -88,9 +96,13 @@ public class DataEndpointApplicationService {
         }
         
         // Activate immediately (or keep as DRAFT based on requirements)
-        endpoint.activate();
+        //endpoint.activate();
         
-        return dataEndpointRepository.save(endpoint);
+        DataEndpoint saved = dataEndpointRepository.save(endpoint);
+        log.info("Data endpoint created successfully: id={}, pathAlias={}, status={}",
+            saved.getIdValue(), saved.getPathAlias(), saved.getStatus());
+        
+        return saved;
     }
     
     /**
@@ -105,9 +117,11 @@ public class DataEndpointApplicationService {
             String fieldConfig,
             String tenantId) {
         
+        log.info("Updating data endpoint: id={}, tenantId={}", id, tenantId);
+        
         DataEndpointId endpointId = new DataEndpointId(UUID.fromString(id));
         DataEndpoint endpoint = dataEndpointRepository.findByIdAndTenantId(endpointId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Endpoint not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("DataEndpoint", id));
         
         // Update using business methods
         if (name != null || description != null) {
@@ -125,7 +139,10 @@ public class DataEndpointApplicationService {
             endpoint.updateFieldMaskingConfig(fieldConfig);
         }
         
-        return dataEndpointRepository.save(endpoint);
+        DataEndpoint saved = dataEndpointRepository.save(endpoint);
+        log.info("Data endpoint updated: id={}, pathAlias={}", id, saved.getPathAlias());
+        
+        return saved;
     }
     
     /**
@@ -135,7 +152,7 @@ public class DataEndpointApplicationService {
     public DataEndpoint activateEndpoint(String id, String tenantId) {
         DataEndpointId endpointId = new DataEndpointId(UUID.fromString(id));
         DataEndpoint endpoint = dataEndpointRepository.findByIdAndTenantId(endpointId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Endpoint not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("DataEndpoint", id));
         
         endpoint.activate();
         return dataEndpointRepository.save(endpoint);
@@ -148,7 +165,7 @@ public class DataEndpointApplicationService {
     public DataEndpoint deactivateEndpoint(String id, String tenantId) {
         DataEndpointId endpointId = new DataEndpointId(UUID.fromString(id));
         DataEndpoint endpoint = dataEndpointRepository.findByIdAndTenantId(endpointId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Endpoint not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("DataEndpoint", id));
         
         endpoint.deactivate();
         return dataEndpointRepository.save(endpoint);
@@ -159,10 +176,17 @@ public class DataEndpointApplicationService {
      */
     @Transactional
     public void deleteEndpoint(String id, String tenantId) {
+        log.warn("Deleting data endpoint: id={}, tenantId={}", id, tenantId);
+        
         DataEndpointId endpointId = new DataEndpointId(UUID.fromString(id));
         DataEndpoint endpoint = dataEndpointRepository.findByIdAndTenantId(endpointId, tenantId)
-                .orElseThrow(() -> new IllegalArgumentException("Endpoint not found: " + id));
+                .orElseThrow(() -> new ResourceNotFoundException("DataEndpoint", id));
+        
+        if (endpoint.getStatus() == com.gs.dsp.dataaccess.domain.model.DataEndpointStatus.ACTIVE) {
+            throw new BusinessException("ENDPOINT_ACTIVE", "Cannot delete active endpoint. Please deactivate it first.");
+        }
         
         dataEndpointRepository.delete(endpoint);
+        log.info("Data endpoint deleted: id={}, pathAlias={}", id, endpoint.getPathAlias());
     }
 }

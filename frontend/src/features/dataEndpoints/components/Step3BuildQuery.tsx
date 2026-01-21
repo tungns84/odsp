@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import type { FilterCondition, SortConfig, ColumnMaskingConfig, MaskingType } from '../../../types/dataEndpoint';
+import type { FilterCondition, SortConfig } from '../../../types/commonTypes';
+import type { ColumnMaskingConfig, MaskingType } from '../../../types/dataEndpointTypes';
 
 interface Step3BuildQueryProps {
     tableName: string;
@@ -386,8 +387,8 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
                                                         <button
                                                             onClick={() => handleMaskingTypeChange(column, 'MASK_ALL')}
                                                             className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-all ${rule.type === 'MASK_ALL'
-                                                                    ? 'border-primary bg-primary/20 text-primary'
-                                                                    : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                ? 'border-primary bg-primary/20 text-primary'
+                                                                : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
                                                                 }`}
                                                         >
                                                             <span className="material-symbols-outlined text-lg">lock</span>
@@ -396,8 +397,8 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
                                                         <button
                                                             onClick={() => handleMaskingTypeChange(column, 'PARTIAL')}
                                                             className={`flex-1 flex items-center justify-center gap-2 rounded-lg border px-4 py-2.5 text-sm transition-all ${rule.type === 'PARTIAL'
-                                                                    ? 'border-primary bg-primary/20 text-primary'
-                                                                    : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                ? 'border-primary bg-primary/20 text-primary'
+                                                                : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
                                                                 }`}
                                                         >
                                                             <span className="material-symbols-outlined text-lg">lock_open</span>
@@ -416,8 +417,8 @@ export const Step3BuildQuery: React.FC<Step3BuildQueryProps> = ({
                                                                     key={preset.id}
                                                                     onClick={() => handlePresetSelect(column, preset.pattern)}
                                                                     className={`rounded-lg border px-3 py-1.5 text-xs transition-all ${rule.pattern === preset.pattern
-                                                                            ? 'border-primary bg-primary/20 text-primary'
-                                                                            : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
+                                                                        ? 'border-primary bg-primary/20 text-primary'
+                                                                        : 'border-surface-border bg-surface/30 text-text-secondary hover:border-primary/50'
                                                                         }`}
                                                                 >
                                                                     {preset.label}

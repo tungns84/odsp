@@ -1,6 +1,7 @@
 package com.gs.dsp.dataaccess.domain.model;
 
 import com.gs.dsp.shared.domain.model.ValueObject;
+import com.gs.dsp.shared.kernel.constants.AppConstants;
 import jakarta.persistence.Embeddable;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
@@ -50,7 +51,7 @@ public class MaskingConfig implements ValueObject, Serializable {
      * Create a FIXED masking config with default replacement
      */
     public static MaskingConfig fixed(String replacement) {
-        return new MaskingConfig(true, TYPE_FIXED, null, replacement != null ? replacement : "*****");
+        return new MaskingConfig(true, TYPE_FIXED, null, replacement != null ? replacement : AppConstants.DEFAULT_MASK_VALUE);
     }
     
     /**

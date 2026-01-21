@@ -6,6 +6,7 @@ import com.gs.dsp.iam.domain.model.ApiKeyId;
 import com.gs.dsp.iam.domain.model.TenantId;
 import com.gs.dsp.iam.domain.repository.ApiKeyRepository;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -22,6 +23,7 @@ import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
+@Slf4j
 public class ApiKeyApplicationService {
 
     private final ApiKeyRepository apiKeyRepository;
@@ -33,6 +35,9 @@ public class ApiKeyApplicationService {
 
     @Transactional
     public String generateApiKey(String tenantIdStr, String name, LocalDateTime expiresAt) {
+        log.info("Creating API key: name={}, tenantId={}, expiresAt={}",
+            name, tenantIdStr, expiresAt);
+        
         TenantId tenantId = new TenantId(tenantIdStr);
         ApiKeyId id = ApiKeyId.generate();
         byte[] secretBytes = new byte[SECRET_LENGTH];
@@ -63,6 +68,10 @@ public class ApiKeyApplicationService {
         );
 
         apiKeyRepository.save(apiKey);
+        
+        // Log only first 8 characters for security
+        log.info("API key created successfully: id={}, name={}, tenantId={}, masked key={}***",
+            id.toString(), name, tenantIdStr, rawKey.substring(0, 8));
 
         return rawKey;
     }
@@ -113,10 +122,13 @@ public class ApiKeyApplicationService {
 
     @Transactional
     public void revokeApiKey(String idStr) {
+        log.warn("Revoking API key: id={}", idStr);
+        
         ApiKeyId id = new ApiKeyId(UUID.fromString(idStr));
         apiKeyRepository.findById(id).ifPresent(apiKey -> {
             apiKey.revoke();
             apiKeyRepository.save(apiKey);
+            log.info("API key revoked: id={}, name={}", idStr, apiKey.getName());
         });
     }
 

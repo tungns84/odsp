@@ -49,7 +49,8 @@ public class ApiKeyController {
     public ResponseEntity<ApiKeyDTO.ApiKeyCreationResponse> generateApiKey(
             @PathVariable String tenantId,
             @Valid @RequestBody ApiKeyDTO.CreateApiKeyRequest request) {
-        String rawKey = apiKeyService.generateApiKey(tenantId, request.getName(), request.getExpiresAt());
+        java.time.LocalDateTime expiresAt = request.getExpiresAt() != null ? request.getExpiresAt().atTime(java.time.LocalTime.MAX) : null;
+        String rawKey = apiKeyService.generateApiKey(tenantId, request.getName(), expiresAt);
         
         // Fetch the created API key to get all details
         // Ideally the service should return the created object or a DTO containing both raw key and details

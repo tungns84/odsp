@@ -39,7 +39,7 @@ public class MaskingService {
     }
 
     private String applyFixedMasking(String value, MaskingConfig config) {
-        return config.getReplacement() != null ? config.getReplacement() : "*****";
+        return config.getReplacement() != null ? config.getReplacement() : AppConstants.DEFAULT_MASK_VALUE;
     }
 
     private String applyRegexMasking(String value, MaskingConfig config) {
@@ -52,7 +52,7 @@ public class MaskingService {
     private String applyPartialMasking(String value, MaskingConfig config) {
         String pattern = config.getPattern();
         if (pattern == null || pattern.isBlank()) {
-            return "*****";
+            return AppConstants.DEFAULT_MASK_VALUE;
         }
 
         // Strategy: ShowFirstN, ShowLastN
@@ -74,25 +74,25 @@ public class MaskingService {
 
     private String applyShowFirstMasking(String value, String pattern) {
         try {
-            int count = Integer.parseInt(pattern.substring(9));
+            int count = Integer.parseInt(pattern.substring(AppConstants.SHOW_FIRST_PREFIX_LENGTH));
             if (value.length() <= count) {
                 return value;
             }
-            return value.substring(0, count) + "*".repeat(value.length() - count);
+            return value.substring(0, count) + AppConstants.DEFAULT_MASK_CHAR.repeat(value.length() - count);
         } catch (NumberFormatException e) {
-            return "*****";
+            return AppConstants.DEFAULT_MASK_VALUE;
         }
     }
 
     private String applyShowLastMasking(String value, String pattern) {
         try {
-            int count = Integer.parseInt(pattern.substring(8));
+            int count = Integer.parseInt(pattern.substring(AppConstants.SHOW_LAST_PREFIX_LENGTH));
             if (value.length() <= count) {
                 return value;
             }
-            return "*".repeat(value.length() - count) + value.substring(value.length() - count);
+            return AppConstants.DEFAULT_MASK_CHAR.repeat(value.length() - count) + value.substring(value.length() - count);
         } catch (NumberFormatException e) {
-            return "*****";
+            return AppConstants.DEFAULT_MASK_VALUE;
         }
     }
 
@@ -110,6 +110,6 @@ public class MaskingService {
             }
             return maskedLocal + "@" + domain;
         }
-        return "*****";
+        return AppConstants.DEFAULT_MASK_VALUE;
     }
 }

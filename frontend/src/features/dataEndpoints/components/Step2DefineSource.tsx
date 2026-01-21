@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import Editor from '@monaco-editor/react';
-import type { SourceType } from '../../../types/dataEndpoint';
-import type { TableMetadata } from '../../../types/connector';
+import type { SourceType, QueryConfig } from '../../../types/dataEndpointTypes';
+import type { TableMetadata } from '../../../types/connectorTypes';
 import { sqlKeywords } from '../../../data';
 import { dataEndpointService } from '../../../services';
 
@@ -42,7 +42,7 @@ export const Step2DefineSource: React.FC<Step2DefineSourceProps> = ({
 
         try {
             // Build queryConfig based on source type
-            const queryConfig = sourceType === 'table'
+            const queryConfig: QueryConfig = sourceType === 'table'
                 ? {
                     mode: 'BUILDER',
                     rootTable: tableName,
@@ -51,8 +51,7 @@ export const Step2DefineSource: React.FC<Step2DefineSourceProps> = ({
                 }
                 : {
                     mode: 'SQL',
-                    sql: customSQL,
-                    limit: 10
+                    sql: customSQL
                 };
 
             const response = await dataEndpointService.testQuery({

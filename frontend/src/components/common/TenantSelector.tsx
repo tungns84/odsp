@@ -49,8 +49,9 @@ export const TenantSelector: React.FC = () => {
 
     return (
         <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-text-tertiary">Tenant</label>
+            <label htmlFor="tenant-selector" className="text-xs font-medium text-text-tertiary">Tenant</label>
             <select
+                id="tenant-selector"
                 value={currentTenant}
                 onChange={handleChange}
                 className="w-full rounded bg-surface-elevated px-2 py-1 text-xs text-text-secondary border border-surface-border focus:border-primary focus:outline-none"

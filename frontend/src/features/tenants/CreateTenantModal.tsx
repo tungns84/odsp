@@ -1,7 +1,9 @@
-import React, { useState } from 'react';
 import { X } from 'lucide-react';
+import { useForm, Controller } from 'react-hook-form';
+import { zodResolver } from '@hookform/resolvers/zod';
 import { tenantService } from '../../services/tenantService';
-import type { CreateTenantRequest } from '../../types/tenantTypes';
+import { CreateTenantSchema, type CreateTenantFormValues } from './schemas';
+import { FormField, FormInput, FormTextarea } from '../../components/forms';
 
 interface Props {
     isOpen: boolean;
@@ -10,28 +12,41 @@ interface Props {
 }
 
 export function CreateTenantModal({ isOpen, onClose, onSuccess }: Props) {
-    const [name, setName] = useState('');
-    const [description, setDescription] = useState('');
-    const [loading, setLoading] = useState(false);
-    const [error, setError] = useState('');
+    const {
+        control,
+        handleSubmit,
+        reset,
+        formState: { errors, isSubmitting },
+        setError
+    } = useForm<CreateTenantFormValues>({
+        resolver: zodResolver(CreateTenantSchema),
+        defaultValues: {
+            name: '',
+            description: ''
+        }
+    });
 
     if (!isOpen) return null;
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        setLoading(true);
-        setError('');
-
+    const onSubmit = async (data: CreateTenantFormValues) => {
         try {
-            await tenantService.createTenant({ name, description });
+            await tenantService.createTenant({
+                name: data.name,
+                description: data.description || ''
+            });
             onSuccess();
-            setName('');
-            setDescription('');
+            reset();
+            onClose();
         } catch (err: any) {
-            setError(err.response?.data?.message || 'Failed to create tenant');
-        } finally {
-            setLoading(false);
+            setError('root', {
+                message: err.response?.data?.message || 'Failed to create tenant'
+            });
         }
+    };
+
+    const handleClose = () => {
+        reset();
+        onClose();
     };
 
     return (
@@ -39,59 +54,73 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: Props) {
             <div className="w-full max-w-md rounded-lg border border-surface-border bg-surface p-6 shadow-xl">
                 <div className="flex items-center justify-between mb-6">
                     <h2 className="text-xl font-semibold text-text-primary">Create Tenant</h2>
-                    <button onClick={onClose} className="text-text-secondary hover:text-text-primary">
+                    <button onClick={handleClose} className="text-text-secondary hover:text-text-primary" aria-label="Close modal">
                         <X size={24} />
                     </button>
                 </div>
 
-                {error && (
-                    <div className="mb-4 rounded-lg bg-red-500/10 p-3 text-sm text-red-500">
-                        {error}
+                {errors.root && (
+                    <div className="mb-4 rounded-lg bg-error-bg border border-error-border p-3 text-sm text-error">
+                        {errors.root.message}
                     </div>
                 )}
 
-                <form onSubmit={handleSubmit} className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Tenant Name *
-                        </label>
-                        <input
-                            type="text"
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            required
-                            className="w-full rounded-lg border border-surface-border bg-surface-elevated px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
-                            placeholder="e.g., Acme Corp"
-                        />
-                    </div>
+                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                    <Controller
+                        name="name"
+                        control={control}
+                        render={({ field }) => (
+                            <FormField
+                                label="Tenant Name"
+                                error={errors.name?.message}
+                                required
+                                htmlFor="tenant-name"
+                            >
+                                <FormInput
+                                    {...field}
+                                    id="tenant-name"
+                                    type="text"
+                                    error={!!errors.name}
+                                    placeholder="e.g., Acme Corp"
+                                />
+                            </FormField>
+                        )}
+                    />
 
-                    <div>
-                        <label className="block text-sm font-medium text-text-secondary mb-1">
-                            Description
-                        </label>
-                        <textarea
-                            value={description}
-                            onChange={(e) => setDescription(e.target.value)}
-                            rows={3}
-                            className="w-full rounded-lg border border-surface-border bg-surface-elevated px-3 py-2 text-text-primary focus:border-primary focus:outline-none"
-                            placeholder="Optional description..."
-                        />
-                    </div>
+                    <Controller
+                        name="description"
+                        control={control}
+                        render={({ field }) => (
+                            <FormField
+                                label="Description"
+                                error={errors.description?.message}
+                                htmlFor="tenant-description"
+                            >
+                                <FormTextarea
+                                    {...field}
+                                    id="tenant-description"
+                                    rows={3}
+                                    error={!!errors.description}
+                                    placeholder="Optional description..."
+                                />
+                            </FormField>
+                        )}
+                    />
 
                     <div className="flex justify-end gap-3 mt-6">
                         <button
                             type="button"
-                            onClick={onClose}
+                            onClick={handleClose}
                             className="px-4 py-2 rounded-lg border border-surface-border text-text-secondary hover:bg-surface-elevated transition-colors"
                         >
                             Cancel
                         </button>
                         <button
                             type="submit"
-                            disabled={loading}
+                            disabled={isSubmitting}
                             className="px-4 py-2 rounded-lg bg-primary text-white hover:bg-primary-hover transition-colors disabled:opacity-50"
                         >
-                            {loading ? 'Creating...' : 'Create Tenant'}
+                            {isSubmitting ? 'Creating...' : 'Create Tenant'}
                         </button>
                     </div>
                 </form>

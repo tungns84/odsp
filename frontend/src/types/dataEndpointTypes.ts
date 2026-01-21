@@ -1,15 +1,6 @@
+import type { FilterCondition, SortConfig } from './commonTypes';
+
 export type SourceType = 'table' | 'customSQL';
-
-export interface FilterCondition {
-    field: string;
-    operator: '=' | '!=' | '>' | '<' | '>=' | '<=' | 'LIKE' | 'IN';
-    value: string;
-}
-
-export interface SortConfig {
-    field: string;
-    direction: 'ASC' | 'DESC';
-}
 
 export type QueryMode = 'BUILDER' | 'SQL';
 
@@ -25,10 +16,7 @@ export interface ColumnDefinition {
     alias?: string;
 }
 
-export interface SortDefinition {
-    field: string;
-    direction: 'ASC' | 'DESC';
-}
+
 
 export interface BuilderQueryConfig {
     mode: 'BUILDER';
@@ -36,7 +24,7 @@ export interface BuilderQueryConfig {
     joins?: JoinDefinition[];
     columns?: ColumnDefinition[];
     filters?: FilterCondition[];
-    sort?: SortDefinition[];
+    sort?: SortConfig[];
     limit?: number;
 }
 

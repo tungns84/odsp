@@ -1,7 +1,8 @@
 package com.gs.dsp.shared.infrastructure.web;
 
-import com.gs.dsp.shared.infrastructure.filter.TraceIdFilter;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -19,20 +20,64 @@ import java.util.Map;
  */
 @Slf4j
 @RestControllerAdvice
+@RequiredArgsConstructor
 public class GlobalExceptionHandler {
+
+    private final Tracer tracer;
+
+    private String getTraceId() {
+        if (tracer != null && tracer.currentSpan() != null) {
+            return tracer.currentSpan().context().traceId();
+        }
+        return null;
+    }
+
+    @ExceptionHandler(com.gs.dsp.shared.domain.exception.ResourceNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    public ResponseEntity<ErrorResponse> handleResourceNotFoundException(
+            com.gs.dsp.shared.domain.exception.ResourceNotFoundException ex,
+            HttpServletRequest request) {
+        log.warn("Resource not found: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+            "RESOURCE_NOT_FOUND",
+            ex.getMessage(),
+            request.getRequestURI(),
+            getTraceId()
+        );
+        
+        return ResponseEntity.status(HttpStatus.NOT_FOUND).body(error);
+    }
+
+    @ExceptionHandler(com.gs.dsp.shared.domain.exception.BusinessException.class)
+    @ResponseStatus(HttpStatus.UNPROCESSABLE_ENTITY)
+    public ResponseEntity<ErrorResponse> handleBusinessException(
+            com.gs.dsp.shared.domain.exception.BusinessException ex,
+            HttpServletRequest request) {
+        log.warn("Business rule violation: {}", ex.getMessage());
+        
+        ErrorResponse error = new ErrorResponse(
+            ex.getCode(),
+            ex.getMessage(),
+            request.getRequestURI(),
+            getTraceId()
+        );
+        
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(error);
+    }
 
     @ExceptionHandler(IllegalArgumentException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     public ResponseEntity<ErrorResponse> handleIllegalArgumentException(
             IllegalArgumentException ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.warn("[traceId={}] Validation error: {}", traceId, ex.getMessage());
+        log.warn("Validation error: {}", ex.getMessage());
         
         ErrorResponse error = new ErrorResponse(
             "VALIDATION_ERROR",
             ex.getMessage(),
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.badRequest().body(error);
@@ -43,13 +88,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleSecurityException(
             SecurityException ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.error("[traceId={}] Security exception: {}", traceId, ex.getMessage());
+        log.error("Security exception: {}", ex.getMessage());
         
         ErrorResponse error = new ErrorResponse(
             "SECURITY_ERROR",
             ex.getMessage(),
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.status(HttpStatus.FORBIDDEN).body(error);
@@ -60,13 +105,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleIllegalStateException(
             IllegalStateException ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.error("[traceId={}] Internal state error: {}", traceId, ex.getMessage(), ex);
+        log.error("Internal state error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = new ErrorResponse(
             "INTERNAL_ERROR",
             ex.getMessage(),
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
@@ -77,8 +122,8 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleValidationException(
             MethodArgumentNotValidException ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.warn("[traceId={}] Bean validation error: {}", traceId, ex.getMessage());
+        String traceId = getTraceId();
+        log.warn("Bean validation error: {}", ex.getMessage());
         
         Map<String, Object> details = new HashMap<>();
         ex.getBindingResult().getFieldErrors().forEach(fieldError ->
@@ -106,13 +151,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleConnectionException(
             Exception ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.error("[traceId={}] Connection error: {}", traceId, ex.getMessage());
+        log.error("Connection error: {}", ex.getMessage());
         
         ErrorResponse error = new ErrorResponse(
             "CONNECTION_ERROR",
             "Failed to connect to the data source. Please check your configuration.",
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.status(HttpStatus.BAD_GATEWAY).body(error);
@@ -123,13 +168,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleRuntimeException(
             RuntimeException ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.error("[traceId={}] Unexpected runtime error: {}", traceId, ex.getMessage(), ex);
+        log.error("Unexpected runtime error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = new ErrorResponse(
             "INTERNAL_ERROR",
             "An unexpected error occurred",
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);
@@ -140,13 +185,13 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponse> handleGenericException(
             Exception ex,
             HttpServletRequest request) {
-        String traceId = TraceIdFilter.getCurrentTraceId();
-        log.error("[traceId={}] Unexpected error: {}", traceId, ex.getMessage(), ex);
+        log.error("Unexpected error: {}", ex.getMessage(), ex);
         
         ErrorResponse error = new ErrorResponse(
             "INTERNAL_ERROR",
             "An unexpected error occurred",
-            request.getRequestURI()
+            request.getRequestURI(),
+            getTraceId()
         );
         
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(error);

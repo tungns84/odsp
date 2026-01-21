@@ -1,6 +1,7 @@
 package com.gs.dsp.connectivity.infrastructure.primary;
 
 import com.gs.dsp.shared.infrastructure.config.TenantContext;
+import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.gs.dsp.connectivity.application.service.ConnectorApplicationService;
 import com.gs.dsp.connectivity.domain.model.Connector;
 import com.gs.dsp.connectivity.infrastructure.primary.dto.ConnectorDetailResponse;
@@ -51,6 +52,7 @@ public class ConnectorController {
                 request.getName(),
                 request.getType(),
                 request.getConfig(),
+                request.getRegisteredTables(),
                 TenantContext.getTenantId()
         );
         return toDetailResponse(connector);
@@ -105,12 +107,8 @@ public class ConnectorController {
 
     @PostMapping("/test-connection")
     public ResponseEntity<List<TableMetadata>> testConnection(@RequestBody Map<String, Object> config) {
-        try {
-            List<TableMetadata> tables = applicationService.testConnectionAndFetchTables(config);
-            return ResponseEntity.ok(tables);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
+        List<TableMetadata> tables = applicationService.testConnectionAndFetchTables(config);
+        return ResponseEntity.ok(tables);
     }
 
     @PostMapping("/{id}/test-connection")
@@ -131,8 +129,6 @@ public class ConnectorController {
             return ResponseEntity.ok(tables);
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
         }
     }
 
@@ -198,7 +194,7 @@ public class ConnectorController {
         Map<String, Object> sanitized = new HashMap<>(config);
         sanitized.replaceAll((key, value) -> {
             if (SENSITIVE_KEYS.stream().anyMatch(sensitive -> key.toLowerCase().contains(sensitive))) {
-                return "******";
+                return AppConstants.PASSWORD_MASK_VALUE;
             }
             return value;
         });
@@ -211,6 +207,7 @@ public class ConnectorController {
         private String name;
         private String type;
         private Map<String, Object> config;
+        private List<TableMetadata> registeredTables;
 
         public String getName() { return name; }
         public void setName(String name) { this.name = name; }
@@ -218,6 +215,10 @@ public class ConnectorController {
         public void setType(String type) { this.type = type; }
         public Map<String, Object> getConfig() { return config; }
         public void setConfig(Map<String, Object> config) { this.config = config; }
+        public List<TableMetadata> getRegisteredTables() { return registeredTables; }
+        public void setRegisteredTables(List<TableMetadata> registeredTables) { 
+            this.registeredTables = registeredTables; 
+        }
     }
 
     public static class UpdateConnectorRequest {

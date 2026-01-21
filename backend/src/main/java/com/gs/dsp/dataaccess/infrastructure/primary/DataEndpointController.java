@@ -57,49 +57,44 @@ public class DataEndpointController {
 
     @PostMapping("/test")
     public ResponseEntity<Map<String, Object>> testQuery(@RequestBody Map<String, Object> request) {
-        try {
-            String connectorIdStr = (String) request.get("connectorId");
-            @SuppressWarnings("unchecked")
-            Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
+        String connectorIdStr = (String) request.get("connectorId");
+        @SuppressWarnings("unchecked")
+        Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
 
-            if (connectorIdStr == null || queryConfigMap == null) {
-                return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, ErrorMessages.MISSING_REQUIRED_FIELDS));
-            }
-
-            UUID connectorId = UUID.fromString(connectorIdStr);
-
-            Connector connector = connectorRepository.findByIdAndTenantId(new ConnectorId(connectorId), TenantContext.getTenantId())
-                    .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
-
-            // Convert map to QueryDefinition
-            ObjectMapper mapper = new ObjectMapper();
-            QueryDefinition queryDef = mapper.convertValue(queryConfigMap, QueryDefinition.class);
-
-            // Execute test query
-            com.gs.dsp.dataaccess.infrastructure.primary.dto.TestQueryResult result = dynamicQueryService.executeTestQuery(
-                    connector,
-                    queryDef
-            );
-
-            List<Map<String, Object>> rows = result.getResults();
-
-            // Extract column names from first row
-            List<String> columns = rows.isEmpty() ? List.of() : List.copyOf(rows.get(0).keySet());
-
-            return ResponseEntity.ok(Map.of(
-                    FieldNames.COLUMNS, columns,
-                    FieldNames.ROWS, rows,
-                    FieldNames.ROW_COUNT, rows.size(),
-                    FieldNames.GENERATED_SQL, result.getSql()
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, e.getMessage()));
+        if (connectorIdStr == null || queryConfigMap == null) {
+            return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, ErrorMessages.MISSING_REQUIRED_FIELDS));
         }
+
+        UUID connectorId = UUID.fromString(connectorIdStr);
+
+        Connector connector = connectorRepository.findByIdAndTenantId(new ConnectorId(connectorId), TenantContext.getTenantId())
+                .orElseThrow(() -> new RuntimeException(String.format(ErrorMessages.CONNECTOR_NOT_FOUND_WITH_ID, connectorId)));
+
+        // Convert map to QueryDefinition
+        ObjectMapper mapper = new ObjectMapper();
+        QueryDefinition queryDef = mapper.convertValue(queryConfigMap, QueryDefinition.class);
+
+        // Execute test query
+        com.gs.dsp.dataaccess.infrastructure.primary.dto.TestQueryResult result = dynamicQueryService.executeTestQuery(
+                connector,
+                queryDef
+        );
+
+        List<Map<String, Object>> rows = result.getResults();
+
+        // Extract column names from first row
+        List<String> columns = rows.isEmpty() ? List.of() : List.copyOf(rows.get(0).keySet());
+
+        return ResponseEntity.ok(Map.of(
+                FieldNames.COLUMNS, columns,
+                FieldNames.ROWS, rows,
+                FieldNames.ROW_COUNT, rows.size(),
+                FieldNames.GENERATED_SQL, result.getSql()
+        ));
     }
 
     @PostMapping
     public ResponseEntity<DataEndpoint> createEndpoint(@RequestBody Map<String, Object> request) {
-        try {
             String name = (String) request.get("name");
             String description = (String) request.get("description");
             String connectorIdStr = (String) request.get("connectorId");
@@ -114,7 +109,12 @@ public class DataEndpointController {
 
             // Serialize queryConfig to JSON string
             ObjectMapper mapper = new ObjectMapper();
-            String queryConfigJson = mapper.writeValueAsString(queryConfigMap);
+            String queryConfigJson;
+            try {
+                queryConfigJson = mapper.writeValueAsString(queryConfigMap);
+            } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                throw new RuntimeException("Failed to process JSON", e);
+            }
 
             // Build fieldConfig JSON with masking configuration
             String fieldConfig = null;
@@ -134,7 +134,7 @@ public class DataEndpointController {
                     String type = config.get("type");
                     if (FieldNames.MASK_ALL.equals(type)) {
                         masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_FIXED);
-                        masking.put(FieldNames.REPLACEMENT, "*****");
+                        masking.put(FieldNames.REPLACEMENT, AppConstants.DEFAULT_MASK_VALUE);
                     } else if (AppConstants.MASKING_TYPE_PARTIAL.equals(type)) {
                         masking.put(FieldNames.TYPE, AppConstants.MASKING_TYPE_PARTIAL);
                         masking.put(FieldNames.PATTERN, config.get(FieldNames.PATTERN));
@@ -143,7 +143,11 @@ public class DataEndpointController {
                     fieldDef.put("masking", masking);
                     fieldDefinitions.add(fieldDef);
                 }
-                fieldConfig = mapper.writeValueAsString(fieldDefinitions);
+                try {
+                    fieldConfig = mapper.writeValueAsString(fieldDefinitions);
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    throw new RuntimeException("Failed to process JSON", e);
+                }
             }
 
             String pathAlias = name.toLowerCase().replaceAll("\\s+", "_");
@@ -160,9 +164,6 @@ public class DataEndpointController {
             );
 
             return ResponseEntity.ok(saved);
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     @PutMapping("/{id}")
@@ -170,7 +171,6 @@ public class DataEndpointController {
             @PathVariable String id,
             @RequestBody Map<String, Object> request
     ) {
-        try {
             @SuppressWarnings("unchecked")
             Map<String, Object> queryConfigMap = (Map<String, Object>) request.get("queryConfig");
             String name = (String) request.get("name");
@@ -179,7 +179,11 @@ public class DataEndpointController {
             String queryConfigJson = null;
             if (queryConfigMap != null) {
                 ObjectMapper mapper = new ObjectMapper();
-                queryConfigJson = mapper.writeValueAsString(queryConfigMap);
+                try {
+                    queryConfigJson = mapper.writeValueAsString(queryConfigMap);
+                } catch (com.fasterxml.jackson.core.JsonProcessingException e) {
+                    throw new RuntimeException("Failed to process JSON", e);
+                }
             }
 
             DataEndpoint updated = dataEndpointApplicationService.updateEndpoint(
@@ -192,11 +196,6 @@ public class DataEndpointController {
             );
 
             return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().build();
-        }
     }
 
     @PatchMapping("/{id}/status")
@@ -204,7 +203,6 @@ public class DataEndpointController {
             @PathVariable String id,
             @RequestBody Map<String, String> statusUpdate
     ) {
-        try {
             String status = statusUpdate.get("status");
             DataEndpoint updated;
             
@@ -217,18 +215,11 @@ public class DataEndpointController {
             }
             
             return ResponseEntity.ok(updated);
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteEndpoint(@PathVariable String id) {
-        try {
-            dataEndpointApplicationService.deleteEndpoint(id, TenantContext.getTenantId());
-            return ResponseEntity.noContent().build();
-        } catch (IllegalArgumentException e) {
-            return ResponseEntity.notFound().build();
-        }
+        dataEndpointApplicationService.deleteEndpoint(id, TenantContext.getTenantId());
+        return ResponseEntity.noContent().build();
     }
 }

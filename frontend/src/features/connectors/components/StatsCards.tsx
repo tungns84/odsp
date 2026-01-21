@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ConnectorStats as ConnectorStatsType } from '../../../types/connector';
+import type { ConnectorStats as ConnectorStatsType } from '../../../types/connectorTypes';
 
 interface StatsCardsProps {
     stats: ConnectorStatsType;

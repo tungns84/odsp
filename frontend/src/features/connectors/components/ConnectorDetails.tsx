@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import type { Connector, AuditLog } from '../../../types/connector';
+import type { Connector, AuditLog } from '../../../types/connectorTypes';
 
 interface ConnectorDetailsProps {
     connector: Connector;
@@ -30,7 +30,7 @@ export const ConnectorDetails: React.FC<ConnectorDetailsProps> = ({
     const [isLoading, setIsLoading] = useState(false);
     const [fullConnector, setFullConnector] = useState<Connector>(connector);
     const [activeTab, setActiveTab] = useState<'config' | 'tables'>('config');
-    const [tables, setTables] = useState<import('../../../types/connector').TableMetadata[]>([]);
+    const [tables, setTables] = useState<import('../../../types/connectorTypes').TableMetadata[]>([]);
     const [loadingTables, setLoadingTables] = useState(false);
     const [expandedTables, setExpandedTables] = useState<Set<string>>(new Set());
 

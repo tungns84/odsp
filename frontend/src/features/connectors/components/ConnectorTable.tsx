@@ -83,16 +83,16 @@ export const ConnectorTable = memo<ConnectorTableProps>(function ConnectorTable(
                                             <button
                                                 className="text-text-tertiary hover:text-green-500"
                                                 onClick={() => onApprove(connector.id)}
-                                                title="Approve"
+                                                aria-label="Approve connector"
                                             >
-                                                <span className="material-symbols-outlined text-xl">check_circle</span>
+                                                <span className="material-symbols-outlined text-xl" aria-hidden="true">check_circle</span>
                                             </button>
                                             <button
                                                 className="text-text-tertiary hover:text-red-500"
                                                 onClick={() => onReject(connector.id)}
-                                                title="Reject"
+                                                aria-label="Reject connector"
                                             >
-                                                <span className="material-symbols-outlined text-xl">cancel</span>
+                                                <span className="material-symbols-outlined text-xl" aria-hidden="true">cancel</span>
                                             </button>
                                         </>
                                     ) : (
@@ -100,16 +100,16 @@ export const ConnectorTable = memo<ConnectorTableProps>(function ConnectorTable(
                                             <button
                                                 className="text-text-tertiary hover:text-primary"
                                                 onClick={() => onView(connector.id)}
-                                                title="View"
+                                                aria-label="View connector details"
                                             >
-                                                <span className="material-symbols-outlined text-xl">visibility</span>
+                                                <span className="material-symbols-outlined text-xl" aria-hidden="true">visibility</span>
                                             </button>
                                             <button
                                                 className="text-text-tertiary hover:text-red-500"
                                                 onClick={() => onDelete(connector.id)}
-                                                title="Delete"
+                                                aria-label="Delete connector"
                                             >
-                                                <span className="material-symbols-outlined text-xl">delete</span>
+                                                <span className="material-symbols-outlined text-xl" aria-hidden="true">delete</span>
                                             </button>
                                         </>
                                     )}

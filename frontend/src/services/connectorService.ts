@@ -1,11 +1,11 @@
 import { apiClient } from './api';
-import type { Connector } from '../types/connector';
+import type { Connector } from '../types/connectorTypes';
 
 export const connectorService = {
     /**
      * Get all connectors for the current tenant
      */
-    getAll: () => apiClient.get<import('../types/connector').ConnectorSummary[]>('/api/v1/connectors'),
+    getAll: () => apiClient.get<import('../types/connectorTypes').ConnectorSummary[]>('/api/v1/connectors'),
 
     /**
      * Get a specific connector by ID
@@ -39,12 +39,12 @@ export const connectorService = {
      * Test connection and fetch available tables
      */
     testConnectionAndFetchTables: (config: Record<string, unknown>) =>
-        apiClient.post<import('../types/connector').TableMetadata[]>('/api/v1/connectors/test-connection', config),
+        apiClient.post<import('../types/connectorTypes').TableMetadata[]>('/api/v1/connectors/test-connection', config),
 
     /**
      * Get tables for a specific connector
      */
-    getTables: (id: string) => apiClient.get<import('../types/connector').TableMetadata[]>(`/api/v1/connectors/${id}/tables`),
+    getTables: (id: string) => apiClient.get<import('../types/connectorTypes').TableMetadata[]>(`/api/v1/connectors/${id}/tables`),
 
     /**
      * Test connection for an existing connector

@@ -27,14 +27,10 @@ public class DynamicDataController {
             @RequestParam(defaultValue = "0") int page,
             @RequestParam(defaultValue = "10") int size
     ) {
-        try {
-            List<Map<String, Object>> result = dynamicQueryService.executeQuery(new DataEndpointId(dataEndpointId), page, size);
-            return ResponseEntity.ok(Map.of(
-                    "meta", Map.of("page", page, "size", size),
-                    "data", result
-            ));
-        } catch (Exception e) {
-            return ResponseEntity.badRequest().body(Map.of(FieldNames.ERROR, e.getMessage()));
-        }
+        List<Map<String, Object>> result = dynamicQueryService.executeQuery(new DataEndpointId(dataEndpointId), page, size);
+        return ResponseEntity.ok(Map.of(
+                "meta", Map.of("page", page, "size", size),
+                "data", result
+        ));
     }
 }

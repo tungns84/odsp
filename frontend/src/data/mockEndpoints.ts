@@ -1,4 +1,4 @@
-import type { DataEndpoint } from '../types/dataEndpoint';
+import type { DataEndpoint } from '../types/dataEndpointTypes';
 
 export const mockEndpoints: DataEndpoint[] = [
     {
@@ -7,11 +7,16 @@ export const mockEndpoints: DataEndpoint[] = [
         description: 'Active users from production database',
         connectorId: '1',
         queryConfig: {
-            type: 'table',
-            tableName: 'users',
-            columns: ['id', 'name', 'email', 'created_at'],
+            mode: 'BUILDER',
+            rootTable: 'users',
+            columns: [
+                { table: 'users', name: 'id' },
+                { table: 'users', name: 'name' },
+                { table: 'users', name: 'email' },
+                { table: 'users', name: 'created_at' }
+            ],
             filters: [{ field: 'status', operator: '=', value: 'active' }],
-            sortOrder: { field: 'created_at', direction: 'DESC' }
+            sort: [{ field: 'created_at', direction: 'DESC' }]
         },
         status: 'ACTIVE',
         createdAt: '2023-10-26'
@@ -22,8 +27,8 @@ export const mockEndpoints: DataEndpoint[] = [
         description: 'Recent orders from last 30 days',
         connectorId: '1',
         queryConfig: {
-            type: 'customSQL',
-            sqlQuery: 'SELECT * FROM orders WHERE created_at > NOW() - INTERVAL 30 DAY'
+            mode: 'SQL',
+            sql: 'SELECT * FROM orders WHERE created_at > NOW() - INTERVAL 30 DAY'
         },
         status: 'ACTIVE',
         createdAt: '2023-10-25'
@@ -34,8 +39,8 @@ export const mockEndpoints: DataEndpoint[] = [
         description: 'Analytics summary data',
         connectorId: '3',
         queryConfig: {
-            type: 'customSQL',
-            sqlQuery: 'SELECT * FROM analytics_summary'
+            mode: 'SQL',
+            sql: 'SELECT * FROM analytics_summary'
         },
         status: 'INACTIVE',
         createdAt: '2023-10-24'

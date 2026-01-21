@@ -1,5 +1,7 @@
 package com.gs.dsp.dataaccess.domain.model;
 
+import com.fasterxml.jackson.annotation.JsonGetter;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.gs.dsp.connectivity.domain.model.Connector;
 import com.gs.dsp.shared.domain.model.AggregateRoot;
@@ -24,7 +26,16 @@ public class DataEndpoint extends AggregateRoot<DataEndpointId> {
     
     @EmbeddedId
     @AttributeOverride(name = "id", column = @Column(name = "id"))
+    @JsonIgnore // Don't serialize as object
     private DataEndpointId id;
+    
+    /**
+     * Serialize ID as string for JSON response
+     */
+    @JsonGetter("id")
+    public String getIdAsString() {
+        return id != null ? id.toString() : null;
+    }
     
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "connector_id", nullable = false)

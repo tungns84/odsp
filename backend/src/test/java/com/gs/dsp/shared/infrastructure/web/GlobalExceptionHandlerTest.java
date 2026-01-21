@@ -1,6 +1,8 @@
 package com.gs.dsp.shared.infrastructure.web;
 
-import com.gs.dsp.shared.infrastructure.filter.TraceIdFilter;
+import io.micrometer.tracing.Span;
+import io.micrometer.tracing.TraceContext;
+import io.micrometer.tracing.Tracer;
 import jakarta.servlet.http.HttpServletRequest;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -23,10 +25,17 @@ class GlobalExceptionHandlerTest {
 
     private GlobalExceptionHandler handler;
     private HttpServletRequest request;
+    private Tracer tracer;
+    private Span span;
+    private TraceContext traceContext;
 
     @BeforeEach
     void setUp() {
-        handler = new GlobalExceptionHandler();
+        tracer = mock(Tracer.class);
+        span = mock(Span.class);
+        traceContext = mock(TraceContext.class);
+
+        handler = new GlobalExceptionHandler(tracer);
         request = new MockHttpServletRequest("GET", "/api/test");
         MDC.clear();
     }
@@ -36,11 +45,17 @@ class GlobalExceptionHandlerTest {
         MDC.clear();
     }
 
+    private void mockTraceId(String traceId) {
+        when(tracer.currentSpan()).thenReturn(span);
+        when(span.context()).thenReturn(traceContext);
+        when(traceContext.traceId()).thenReturn(traceId);
+    }
+
     @Test
     void shouldHandleIllegalArgumentException() {
         // Given
         String traceId = "test-trace-123";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
         IllegalArgumentException ex = new IllegalArgumentException("Invalid argument");
 
         // When
@@ -59,7 +74,7 @@ class GlobalExceptionHandlerTest {
     void shouldHandleSecurityException() {
         // Given
         String traceId = "test-trace-456";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
         SecurityException ex = new SecurityException("Access denied");
 
         // When
@@ -77,7 +92,7 @@ class GlobalExceptionHandlerTest {
     void shouldHandleIllegalStateException() {
         // Given
         String traceId = "test-trace-789";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
         IllegalStateException ex = new IllegalStateException("Invalid state");
 
         // When
@@ -94,7 +109,7 @@ class GlobalExceptionHandlerTest {
     void shouldHandleMethodArgumentNotValidException() {
         // Given
         String traceId = "test-trace-validation";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
 
         MethodArgumentNotValidException ex = mock(MethodArgumentNotValidException.class);
         BindingResult bindingResult = mock(BindingResult.class);
@@ -123,7 +138,7 @@ class GlobalExceptionHandlerTest {
     void shouldHandleRuntimeException() {
         // Given
         String traceId = "test-trace-runtime";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
         RuntimeException ex = new RuntimeException("Unexpected error");
 
         // When
@@ -141,7 +156,7 @@ class GlobalExceptionHandlerTest {
     void shouldHandleGenericException() {
         // Given
         String traceId = "test-trace-generic";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, traceId);
+        mockTraceId(traceId);
         Exception ex = new Exception("Generic error");
 
         // When

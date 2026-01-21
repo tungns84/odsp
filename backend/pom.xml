@@ -15,6 +15,11 @@
 	<description>Open Data Integration Platform</description>
 	<properties>
 		<java.version>21</java.version>
+        <flowable.version>7.2.0</flowable.version>
+		<!-- Logging properties for spring-boot:run -->
+		<log.file.prefix>application</log.file.prefix>
+		<service.name>dsp</service.name>
+		<environment>dev</environment>
 	</properties>
 	<dependencies>
 		<dependency>
@@ -86,6 +91,17 @@
             <artifactId>logstash-logback-encoder</artifactId>
             <version>7.4</version>
         </dependency>
+        <!-- Micrometer Tracing Bridge (Brave) -->
+        <dependency>
+            <groupId>io.micrometer</groupId>
+            <artifactId>micrometer-tracing-bridge-brave</artifactId>
+        </dependency>
+        <!-- Flowable Workflow Engine -->
+        <dependency>
+            <groupId>org.flowable</groupId>
+            <artifactId>flowable-spring-boot-starter-process</artifactId>
+            <version>${flowable.version}</version>
+        </dependency>
 
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -108,14 +124,26 @@
 			<version>1.4.1</version>
 			<scope>test</scope>
 		</dependency>
+
+		<dependency>
+			<groupId>io.hawt</groupId>
+			<artifactId>hawtio-springboot</artifactId>
+			<version>4.6.2</version>
+		</dependency>
 	</dependencies>
 
 	<build>
 		<plugins>
-			<plugin>
+		<plugin>
 				<groupId>org.springframework.boot</groupId>
 				<artifactId>spring-boot-maven-plugin</artifactId>
 				<configuration>
+					<!-- Default JVM arguments for local development -->
+					<jvmArguments>
+						-DLOG_FILE_PREFIX=${log.file.prefix}
+						-DSERVICE_NAME=${service.name}
+						-DENVIRONMENT=${environment}
+					</jvmArguments>
 					<excludes>
 						<exclude>
 							<groupId>org.projectlombok</groupId>

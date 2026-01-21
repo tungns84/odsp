@@ -1,4 +1,4 @@
-import React from 'react';
+
 import { Users, UserCheck, UserX } from 'lucide-react';
 import type { Tenant } from '../../types/tenantTypes';
 

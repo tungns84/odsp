@@ -1,6 +1,5 @@
 package com.gs.dsp.shared.infrastructure.web;
 
-import com.gs.dsp.shared.infrastructure.filter.TraceIdFilter;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -47,27 +46,7 @@ class ErrorResponseTest {
         assertThat(error.getPath()).isEqualTo("/api/test");
     }
 
-    @Test
-    void shouldIncludeTraceIdWhenAvailableInMDC() {
-        // Given
-        String expectedTraceId = "test-trace-123";
-        MDC.put(TraceIdFilter.MDC_TRACE_ID_KEY, expectedTraceId);
 
-        // When
-        ErrorResponse error = new ErrorResponse("TEST_ERROR", "Test message");
-
-        // Then
-        assertThat(error.getTraceId()).isEqualTo(expectedTraceId);
-    }
-
-    @Test
-    void shouldHandleNullTraceIdWhenNotInMDC() {
-        // When
-        ErrorResponse error = new ErrorResponse("TEST_ERROR", "Test message");
-
-        // Then
-        assertThat(error.getTraceId()).isNull();
-    }
 
     @Test
     void shouldCreateErrorResponseWithAllFields() {

@@ -1,4 +1,4 @@
-import type { Connector } from '../types/connector';
+import type { Connector } from '../types/connectorTypes';
 
 export const mockConnectors: Connector[] = [
     {
@@ -7,6 +7,7 @@ export const mockConnectors: Connector[] = [
         type: 'DATABASE',
         status: 'APPROVED',
         createdAt: '2023-10-26',
+        isActive: true,
         config: { host: 'localhost', port: 5432, database: 'production' }
     },
     {
@@ -15,6 +16,7 @@ export const mockConnectors: Connector[] = [
         type: 'API',
         status: 'INIT',
         createdAt: '2023-10-25',
+        isActive: true,
         config: { endpoint: 'https://api.salesforce.com', apiKey: '••••••••' }
     },
     {
@@ -23,6 +25,7 @@ export const mockConnectors: Connector[] = [
         type: 'API',
         status: 'APPROVED',
         createdAt: '2023-10-24',
+        isActive: true,
         config: { endpoint: 'https://analytics.google.com', apiKey: '••••••••' }
     },
     {
@@ -31,6 +34,7 @@ export const mockConnectors: Connector[] = [
         type: 'FILE_SYSTEM',
         status: 'REJECTED',
         createdAt: '2023-10-23',
+        isActive: false,
         config: { path: '/data/files', bucket: 'my-bucket' }
     },
     {
@@ -39,6 +43,7 @@ export const mockConnectors: Connector[] = [
         type: 'API',
         status: 'APPROVED',
         createdAt: '2023-10-22',
+        isActive: true,
         config: { endpoint: 'https://api.stripe.com', apiKey: '••••••••' }
     }
 ];

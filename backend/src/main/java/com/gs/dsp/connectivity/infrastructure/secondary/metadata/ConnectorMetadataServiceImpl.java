@@ -9,6 +9,7 @@ import com.gs.dsp.connectivity.domain.service.MetadataInferenceService;
 import com.gs.dsp.connectivity.infrastructure.secondary.datasource.DataSourceFactory;
 import com.gs.dsp.connectivity.infrastructure.primary.dto.MetadataVisibility;
 import com.gs.dsp.connectivity.infrastructure.primary.dto.TableMetadata;
+import com.gs.dsp.shared.kernel.constants.AppConstants;
 import com.gs.dsp.shared.kernel.constants.FieldNames;
 import org.jdbi.v3.core.Jdbi;
 import org.springframework.stereotype.Service;
@@ -53,10 +54,10 @@ public class ConnectorMetadataServiceImpl implements ConnectorMetadataService {
         // Create a transient connector object for new connector creation
         Connector tempConnector = Connector.create(
                 ConnectorId.generate(),
-                "Test Connection",
+                AppConstants.TEST_CONNECTION_NAME,
                 ConnectorType.database(),
                 new ConnectionConfig(config),
-                "mockup-tenant"
+                AppConstants.TEST_TENANT_ID
         );
 
         return testConnectionAndFetchTables(tempConnector);

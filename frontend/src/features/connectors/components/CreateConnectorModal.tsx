@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useForm, Controller } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { CreateConnectorSchema, type CreateConnectorFormValues } from '../schemas';
-import type { Connector } from '../../../types/connector';
+import type { Connector } from '../../../types/connectorTypes';
 
 interface CreateConnectorModalProps {
     isOpen: boolean;
@@ -41,7 +41,8 @@ export const CreateConnectorModal: React.FC<CreateConnectorModalProps> = ({
         onSubmit({
             name: data.name,
             type: data.type,
-            config: data.config
+            config: data.config,
+            isActive: true
         });
         reset();
         setTestResult(null);

@@ -1,5 +1,6 @@
 import { apiClient } from './api';
-import type { DataEndpoint, QueryConfig } from '../types/dataEndpoint';
+import type { DataEndpoint, QueryConfig } from '../types/dataEndpointTypes';
+import type { PaginatedResponse } from '../types/commonTypes';
 
 // Request/Response Types
 interface TestQueryRequest {
@@ -22,13 +23,7 @@ interface CreateEndpointRequest {
     maskingConfig?: Record<string, { type: string; pattern?: string }>;
 }
 
-interface QueryDataResponse {
-    data: Record<string, any>[];
-    totalElements: number;
-    totalPages: number;
-    currentPage: number;
-    pageSize: number;
-}
+
 
 /**
  * Data Endpoint Service
@@ -90,7 +85,7 @@ export const dataEndpointService = {
      * Query data from endpoint with pagination
      */
     async queryData(endpointId: string, page: number = 0, size: number = 10) {
-        return apiClient.get<QueryDataResponse>(`/api/v1/data/${endpointId}`, {
+        return apiClient.get<PaginatedResponse<Record<string, any>>>(`/api/v1/data/${endpointId}`, {
             params: { page, size }
         });
     }

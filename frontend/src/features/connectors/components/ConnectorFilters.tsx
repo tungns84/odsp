@@ -1,5 +1,5 @@
 import React from 'react';
-import type { ConnectorFilters as ConnectorFiltersType } from '../../../types/connector';
+import type { ConnectorFilters as ConnectorFiltersType } from '../../../types/connectorTypes';
 
 interface ConnectorFiltersProps {
     filters: ConnectorFiltersType;
@@ -33,8 +33,10 @@ export const ConnectorFilters: React.FC<ConnectorFiltersProps> = ({
             <div className="flex flex-wrap items-center gap-4">
                 {/* Search */}
                 <div className="relative flex-grow">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary">search</span>
+                    <label htmlFor="connector-search" className="sr-only">Search connectors</label>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden="true">search</span>
                     <input
+                        id="connector-search"
                         className="w-full rounded-lg border-slate-200/20 bg-surface/50 py-2 pl-10 pr-4 text-white placeholder-slate-400 focus:border-primary focus:ring-primary"
                         placeholder="Search by name..."
                         type="text"
@@ -44,33 +46,43 @@ export const ConnectorFilters: React.FC<ConnectorFiltersProps> = ({
                 </div>
 
                 {/* Type Filter */}
-                <select
-                    className="rounded-lg border-slate-200/20 bg-surface/50 text-white focus:border-primary focus:ring-primary"
-                    value={filters.type}
-                    onChange={handleTypeChange}
-                >
-                    <option value="">Type: All</option>
-                    <option value="DATABASE">Database</option>
-                    <option value="API">API</option>
-                    <option value="FILE_SYSTEM">File System</option>
-                </select>
+                <div>
+                    <label htmlFor="connector-type-filter" className="sr-only">Filter by type</label>
+                    <select
+                        id="connector-type-filter"
+                        className="rounded-lg border-slate-200/20 bg-surface/50 text-white focus:border-primary focus:ring-primary"
+                        value={filters.type}
+                        onChange={handleTypeChange}
+                    >
+                        <option value="">Type: All</option>
+                        <option value="DATABASE">Database</option>
+                        <option value="API">API</option>
+                        <option value="FILE_SYSTEM">File System</option>
+                    </select>
+                </div>
 
                 {/* Status Filter */}
-                <select
-                    className="rounded-lg border-slate-200/20 bg-surface/50 text-white focus:border-primary focus:ring-primary"
-                    value={filters.status}
-                    onChange={handleStatusChange}
-                >
-                    <option value="">Status: All</option>
-                    <option value="APPROVED">Active</option>
-                    <option value="INIT">Pending Approval</option>
-                    <option value="REJECTED">Rejected</option>
-                </select>
+                <div>
+                    <label htmlFor="connector-status-filter" className="sr-only">Filter by status</label>
+                    <select
+                        id="connector-status-filter"
+                        className="rounded-lg border-slate-200/20 bg-surface/50 text-white focus:border-primary focus:ring-primary"
+                        value={filters.status}
+                        onChange={handleStatusChange}
+                    >
+                        <option value="">Status: All</option>
+                        <option value="APPROVED">Active</option>
+                        <option value="INIT">Pending Approval</option>
+                        <option value="REJECTED">Rejected</option>
+                    </select>
+                </div>
 
                 {/* Date Filter */}
                 <div className="relative">
-                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary">calendar_month</span>
+                    <label htmlFor="connector-date-filter" className="sr-only">Filter by creation date</label>
+                    <span className="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-text-tertiary" aria-hidden="true">calendar_month</span>
                     <input
+                        id="connector-date-filter"
                         className="w-full rounded-lg border-slate-200/20 bg-surface/50 py-2 pl-10 pr-4 text-white placeholder-slate-400 focus:border-primary focus:ring-primary"
                         onBlur={(e) => e.target.type = 'text'}
                         onFocus={(e) => e.target.type = 'date'}

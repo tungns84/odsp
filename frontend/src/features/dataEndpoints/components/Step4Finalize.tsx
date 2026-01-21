@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
-import type { WizardState } from '../../../types/dataEndpoint';
-import type { Connector } from '../../../types/connector';
+import type { WizardState } from '../../../types/dataEndpointTypes';
+import type { Connector } from '../../../types/connectorTypes';
 import { dataEndpointService } from '../../../services';
 
 interface Step4FinalizeProps {

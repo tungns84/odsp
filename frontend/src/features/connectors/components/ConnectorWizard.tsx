@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { WizardStep1ConnectionDetails } from './WizardStep1ConnectionDetails';
 import { WizardStep2TableSelection } from './WizardStep2TableSelection';
 import type { WizardStep1FormValues, TableSelectionFormValues } from '../schemas';
-import type { Connector, TableMetadata } from '../../../types/connector';
+import type { Connector, TableMetadata } from '../../../types/connectorTypes';
 import { connectorService } from '../../../services/connectorService';
 
 interface ConnectorWizardProps {

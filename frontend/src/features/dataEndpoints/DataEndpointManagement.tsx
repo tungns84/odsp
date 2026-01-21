@@ -1,7 +1,8 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useMemo, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
-import type { DataEndpoint } from '../../types/dataEndpoint';
-import { dataEndpointService } from '../../services';
+
+import { useDataEndpoints } from '../../hooks/useDataEndpoints';
+import { workflowService } from '../../services/workflowService';
 
 interface EndpointFilters {
     search: string;
@@ -17,88 +18,105 @@ const initialFilters: EndpointFilters = {
     createdDate: ''
 };
 
+interface PendingAction {
+    id: string;
+    type: 'delete' | 'toggle' | 'publish';
+}
+
 export const DataEndpointManagement: React.FC = () => {
     const navigate = useNavigate();
-    const [endpoints, setEndpoints] = useState<DataEndpoint[]>([]);
+    const { endpoints, loading, error, refresh, deleteEndpoint, toggleStatus } = useDataEndpoints();
     const [filters, setFilters] = useState<EndpointFilters>(initialFilters);
-    const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
+    const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
 
-    // Load endpoints from API
-    const loadEndpoints = async () => {
-        try {
-            setLoading(true);
-            setError(null);
-            const response = await dataEndpointService.getAll();
-            setEndpoints(response.data);
-        } catch (err: any) {
-            console.error('Failed to load endpoints:', err);
-            setError(err.response?.data?.message || 'Failed to load endpoints. Please try again.');
-        } finally {
-            setLoading(false);
-        }
-    };
+    // Memoize filtered endpoints to avoid recalculation
+    const filteredEndpoints = useMemo(() => {
+        return endpoints.filter(endpoint => {
+            if (filters.search && !endpoint.name.toLowerCase().includes(filters.search.toLowerCase()) &&
+                !endpoint.description?.toLowerCase().includes(filters.search.toLowerCase())) {
+                return false;
+            }
+            if (filters.connectorId && endpoint.connectorId !== filters.connectorId) {
+                return false;
+            }
+            if (filters.status && endpoint.status !== filters.status) {
+                return false;
+            }
+            if (filters.createdDate && endpoint.createdAt !== filters.createdDate) {
+                return false;
+            }
+            return true;
+        });
+    }, [endpoints, filters]);
 
-    // Initial load
-    useEffect(() => {
-        loadEndpoints();
+    // Memoize stats to avoid multiple filter calls
+    const stats = useMemo(() => ({
+        total: endpoints.length,
+        active: endpoints.filter(e => e.status === 'ACTIVE').length,
+        inactive: endpoints.filter(e => e.status === 'INACTIVE').length,
+    }), [endpoints]);
+
+    const handleClearFilters = useCallback(() => {
+        setFilters(initialFilters);
     }, []);
 
-    const filteredEndpoints = endpoints.filter(endpoint => {
-        if (filters.search && !endpoint.name.toLowerCase().includes(filters.search.toLowerCase()) &&
-            !endpoint.description?.toLowerCase().includes(filters.search.toLowerCase())) {
-            return false;
-        }
-        if (filters.connectorId && endpoint.connectorId !== filters.connectorId) {
-            return false;
-        }
-        if (filters.status && endpoint.status !== filters.status) {
-            return false;
-        }
-        if (filters.createdDate && endpoint.createdAt !== filters.createdDate) {
-            return false;
-        }
-        return true;
-    });
-
-    const handleClearFilters = () => {
-        setFilters(initialFilters);
-    };
-
-    const handleView = (id: string) => {
+    const handleView = useCallback((id: string) => {
         navigate(`/data-endpoints/${id}`);
-    };
+    }, [navigate]);
 
-    const handleEdit = (id: string) => {
+    const handleEdit = useCallback((id: string) => {
         navigate(`/data-endpoints/${id}/edit`);
-    };
+    }, [navigate]);
 
-    const handleDelete = async (id: string) => {
+    const handleDelete = useCallback(async (id: string) => {
         if (!confirm('Are you sure you want to delete this endpoint?')) return;
 
+        setPendingAction({ id, type: 'delete' });
+        setActionError(null);
         try {
-            await dataEndpointService.delete(id);
-            setEndpoints(prev => prev.filter(e => e.id !== id));
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to delete endpoint');
+            await deleteEndpoint(id);
+        } catch (err: unknown) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to delete endpoint';
+            setActionError(message);
+        } finally {
+            setPendingAction(null);
         }
-    };
+    }, [deleteEndpoint]);
 
-    const handleToggleStatus = async (id: string) => {
-        const endpoint = endpoints.find(e => e.id === id);
-        if (!endpoint) return;
-
-        const newStatus = endpoint.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
-
+    const handleToggleStatus = useCallback(async (id: string) => {
+        setPendingAction({ id, type: 'toggle' });
+        setActionError(null);
         try {
-            await dataEndpointService.toggleStatus(id, newStatus);
-            setEndpoints(prev => prev.map(e =>
-                e.id === id ? { ...e, status: newStatus } : e
-            ));
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to update status');
+            await toggleStatus(id);
+        } catch (err: unknown) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update status';
+            setActionError(message);
+        } finally {
+            setPendingAction(null);
         }
-    };
+    }, [toggleStatus]);
+
+    const handleRequestPublish = useCallback(async (id: string, _name: string) => {
+        const tenantId = localStorage.getItem('tenantId') || 'default-tenant';
+        setPendingAction({ id, type: 'publish' });
+        setActionError(null);
+        try {
+            await workflowService.startProcess('endpoint-publishing', {
+                endpointId: id,
+                tenantId,
+            });
+            // Success feedback inline instead of alert
+            refresh(); // Refresh to show updated state
+        } catch (err: unknown) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to submit publishing request';
+            setActionError(message);
+        } finally {
+            setPendingAction(null);
+        }
+    }, [refresh]);
+
+    const isActionPending = (id: string) => pendingAction?.id === id;
 
     const getStatusBadge = (status: string) => {
         const styles = {
@@ -119,7 +137,7 @@ export const DataEndpointManagement: React.FC = () => {
                 <h1 className="text-2xl font-bold text-white">Data Endpoints</h1>
                 <button
                     onClick={() => navigate('/data-endpoints/create')}
-                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90"
+                    className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-bold text-white hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-2"
                 >
                     <span className="material-symbols-outlined text-lg">add</span>
                     New Endpoint
@@ -133,7 +151,7 @@ export const DataEndpointManagement: React.FC = () => {
                         <span className="material-symbols-outlined text-4xl text-primary">dns</span>
                         <div>
                             <p className="text-sm text-text-tertiary">Total Endpoints</p>
-                            <p className="text-2xl font-bold text-white">{endpoints.length}</p>
+                            <p className="text-2xl font-bold text-white">{stats.total}</p>
                         </div>
                     </div>
                 </div>
@@ -143,7 +161,7 @@ export const DataEndpointManagement: React.FC = () => {
                         <div>
                             <p className="text-sm text-text-tertiary">Active</p>
                             <p className="text-2xl font-bold text-white">
-                                {endpoints.filter(e => e.status === 'ACTIVE').length}
+                                {stats.active}
                             </p>
                         </div>
                     </div>
@@ -154,7 +172,7 @@ export const DataEndpointManagement: React.FC = () => {
                         <div>
                             <p className="text-sm text-text-tertiary">Inactive</p>
                             <p className="text-2xl font-bold text-white">
-                                {endpoints.filter(e => e.status === 'INACTIVE').length}
+                                {stats.inactive}
                             </p>
                         </div>
                     </div>
@@ -165,7 +183,9 @@ export const DataEndpointManagement: React.FC = () => {
             <div className="mb-6 rounded-xl border border-surface-border-subtle bg-surface p-4 shadow-sm">
                 <div className="grid grid-cols-1 gap-4 md:grid-cols-4">
                     <div className="md:col-span-2">
+                        <label htmlFor="endpoint-search" className="sr-only">Search endpoints</label>
                         <input
+                            id="endpoint-search"
                             type="text"
                             placeholder="Search endpoints..."
                             value={filters.search}
@@ -173,15 +193,19 @@ export const DataEndpointManagement: React.FC = () => {
                             className="w-full rounded-lg border border-surface-border bg-surface-elevated/50 px-4 py-2 text-white placeholder-slate-400 focus:border-primary focus:outline-none"
                         />
                     </div>
-                    <select
-                        value={filters.status}
-                        onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
-                        className="rounded-lg border border-surface-border bg-surface-elevated/50 px-4 py-2 text-white focus:border-primary focus:outline-none"
-                    >
-                        <option value="">All Status</option>
-                        <option value="ACTIVE">Active</option>
-                        <option value="INACTIVE">Inactive</option>
-                    </select>
+                    <div>
+                        <label htmlFor="endpoint-status-filter" className="sr-only">Filter by status</label>
+                        <select
+                            id="endpoint-status-filter"
+                            value={filters.status}
+                            onChange={(e) => setFilters(prev => ({ ...prev, status: e.target.value }))}
+                            className="rounded-lg border border-surface-border bg-surface-elevated/50 px-4 py-2 text-white focus:border-primary focus:outline-none"
+                        >
+                            <option value="">All Status</option>
+                            <option value="ACTIVE">Active</option>
+                            <option value="INACTIVE">Inactive</option>
+                        </select>
+                    </div>
                     <button
                         onClick={handleClearFilters}
                         className="rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated"
@@ -192,17 +216,37 @@ export const DataEndpointManagement: React.FC = () => {
             </div>
 
             {/* Loading & Error States */}
-            {loading && (
-                <div className="mb-6 flex justify-center py-8">
-                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent"></div>
+            {loading ? (
+                <div className="mb-6 flex justify-center py-8" aria-live="polite" role="status">
+                    <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true"></div>
+                    <span className="sr-only">Loading endpoints…</span>
                 </div>
-            )}
+            ) : null}
 
-            {error && (
-                <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
-                    {error}
+            {error ? (
+                <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500 flex items-center justify-between" role="alert">
+                    <span>{error}</span>
+                    <button
+                        onClick={refresh}
+                        className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                        Retry
+                    </button>
                 </div>
-            )}
+            ) : null}
+
+            {/* Action Error */}
+            {actionError ? (
+                <div className="mb-6 rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500 flex items-center justify-between" role="alert">
+                    <span>{actionError}</span>
+                    <button
+                        onClick={() => setActionError(null)}
+                        className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            ) : null}
 
             {/* Table */}
             {!loading && !error && (
@@ -244,35 +288,60 @@ export const DataEndpointManagement: React.FC = () => {
                                             <td className="px-6 py-4 text-sm text-text-secondary">{endpoint.createdAt}</td>
                                             <td className="px-6 py-4">
                                                 <div className="flex justify-end gap-2">
+                                                    {endpoint.status === 'INACTIVE' && (
+                                                        <button
+                                                            onClick={() => handleRequestPublish(endpoint.id, endpoint.name)}
+                                                            disabled={isActionPending(endpoint.id)}
+                                                            className="rounded-lg p-2 text-blue-400 hover:bg-blue-500/10 hover:text-blue-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                            aria-label="Request publish"
+                                                            title="Request Publish"
+                                                        >
+                                                            {isActionPending(endpoint.id) && pendingAction?.type === 'publish' ? (
+                                                                <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                                                            ) : (
+                                                                <span className="material-symbols-outlined text-lg">publish</span>
+                                                            )}
+                                                        </button>
+                                                    )}
                                                     <button
                                                         onClick={() => handleView(endpoint.id)}
-                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary"
-                                                        title="View"
+                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                                        aria-label="View endpoint details"
                                                     >
                                                         <span className="material-symbols-outlined text-lg">visibility</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleEdit(endpoint.id)}
-                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary"
-                                                        title="Edit"
+                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                                                        aria-label="Edit endpoint"
                                                     >
                                                         <span className="material-symbols-outlined text-lg">edit</span>
                                                     </button>
                                                     <button
                                                         onClick={() => handleToggleStatus(endpoint.id)}
-                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary"
-                                                        title={endpoint.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
+                                                        disabled={isActionPending(endpoint.id)}
+                                                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated-hover hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        aria-label={endpoint.status === 'ACTIVE' ? 'Deactivate endpoint' : 'Activate endpoint'}
                                                     >
-                                                        <span className="material-symbols-outlined text-lg">
-                                                            {endpoint.status === 'ACTIVE' ? 'pause_circle' : 'play_circle'}
-                                                        </span>
+                                                        {isActionPending(endpoint.id) && pendingAction?.type === 'toggle' ? (
+                                                            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                                                        ) : (
+                                                            <span className="material-symbols-outlined text-lg">
+                                                                {endpoint.status === 'ACTIVE' ? 'pause_circle' : 'play_circle'}
+                                                            </span>
+                                                        )}
                                                     </button>
                                                     <button
                                                         onClick={() => handleDelete(endpoint.id)}
-                                                        className="rounded-lg p-2 text-red-400 hover:bg-red-500/10 hover:text-red-300"
-                                                        title="Delete"
+                                                        disabled={isActionPending(endpoint.id)}
+                                                        className="rounded-lg p-2 text-red-400 hover:bg-red-500/10 hover:text-red-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
+                                                        aria-label="Delete endpoint"
                                                     >
-                                                        <span className="material-symbols-outlined text-lg">delete</span>
+                                                        {isActionPending(endpoint.id) && pendingAction?.type === 'delete' ? (
+                                                            <span className="material-symbols-outlined text-lg animate-spin">progress_activity</span>
+                                                        ) : (
+                                                            <span className="material-symbols-outlined text-lg">delete</span>
+                                                        )}
                                                     </button>
                                                 </div>
                                             </td>

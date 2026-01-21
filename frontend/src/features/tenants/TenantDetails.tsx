@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useParams, useSearchParams } from 'react-router-dom';
 import { tenantService } from '../../services/tenantService';
 import type { Tenant } from '../../types/tenantTypes';
@@ -47,8 +47,8 @@ export function TenantDetails() {
                     <button
                         onClick={() => setActiveTab('overview')}
                         className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 ${activeTab === 'overview'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-text-secondary hover:text-text-primary'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-text-secondary hover:text-text-primary'
                             }`}
                     >
                         Overview
@@ -56,8 +56,8 @@ export function TenantDetails() {
                     <button
                         onClick={() => setActiveTab('api-keys')}
                         className={`pb-2 px-1 text-sm font-medium transition-colors border-b-2 ${activeTab === 'api-keys'
-                                ? 'border-primary text-primary'
-                                : 'border-transparent text-text-secondary hover:text-text-primary'
+                            ? 'border-primary text-primary'
+                            : 'border-transparent text-text-secondary hover:text-text-primary'
                             }`}
                     >
                         API Keys

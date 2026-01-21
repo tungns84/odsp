@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
+             xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+             xmlns:flowable="http://flowable.org/bpmn"
+             targetNamespace="http://www.gs.com/dsp">
+
+    <process id="endpoint-publishing" name="Data Endpoint Publishing" isExecutable="true">
+        <startEvent id="startEvent" name="Start" />
+        
+        <sequenceFlow sourceRef="startEvent" targetRef="approveTask" />
+        
+        <userTask id="approveTask" name="Approve Publication" flowable:candidateGroups="admin">
+            <documentation>
+                Approve the publication of data endpoint: ${endpointId}
+            </documentation>
+        </userTask>
+        
+        <sequenceFlow sourceRef="approveTask" targetRef="publishServiceTask" />
+        
+        <serviceTask id="publishServiceTask" name="Publish Endpoint" 
+                     flowable:delegateExpression="${publishEndpointDelegate}" />
+        
+        <sequenceFlow sourceRef="publishServiceTask" targetRef="endEvent" />
+        
+        <endEvent id="endEvent" name="End" />
+    </process>
+
+</definitions>

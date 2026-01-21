@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import Editor from '@monaco-editor/react';
-import type { TableMetadata } from '../../../types/connector';
+import type { TableMetadata } from '../../../types/connectorTypes';
 import { dataEndpointService } from '../../../services';
 
-import type { QueryConfig } from '../../../types/dataEndpoint';
+import type { QueryConfig } from '../../../types/dataEndpointTypes';
 
 interface Step4PreviewProps {
     connectorId: string | null;

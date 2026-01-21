@@ -1,7 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
-import type { DataEndpoint } from '../../types/dataEndpoint';
+import type { DataEndpoint } from '../../types/dataEndpointTypes';
 import { dataEndpointService } from '../../services';
+
+interface PendingAction {
+    type: 'test' | 'toggle' | 'delete';
+}
 
 export const DataEndpointDetails: React.FC = () => {
     const { id } = useParams<{ id: string }>();
@@ -10,13 +14,12 @@ export const DataEndpointDetails: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [testResult, setTestResult] = useState<{ columns: string[]; rows: Record<string, any>[] } | null>(null);
-    const [isTesting, setIsTesting] = useState(false);
 
-    useEffect(() => {
-        loadEndpoint();
-    }, [id]);
+    // Unified pending state and action error
+    const [pendingAction, setPendingAction] = useState<PendingAction | null>(null);
+    const [actionError, setActionError] = useState<string | null>(null);
 
-    const loadEndpoint = async () => {
+    const loadEndpoint = useCallback(async () => {
         if (!id) return;
 
         try {
@@ -24,80 +27,109 @@ export const DataEndpointDetails: React.FC = () => {
             setError(null);
             const response = await dataEndpointService.getById(id);
             setEndpoint(response.data);
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Failed to load endpoint:', err);
-            setError(err.response?.data?.message || 'Failed to load endpoint details');
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to load endpoint details';
+            setError(message);
         } finally {
             setLoading(false);
         }
-    };
+    }, [id]);
 
-    const handleTestEndpoint = async () => {
-        if (!endpoint) return;
+    useEffect(() => {
+        loadEndpoint();
+    }, [loadEndpoint]);
 
-        setIsTesting(true);
+    const handleTestEndpoint = useCallback(async () => {
+        if (!endpoint || !endpoint.connector || !endpoint.queryConfig) {
+            setActionError('Missing connector or query configuration');
+            return;
+        }
+
+        setPendingAction({ type: 'test' });
+        setActionError(null);
         setTestResult(null);
 
         try {
-            // Parse the queryConfig from the endpoint
-            const queryConfig = JSON.parse(endpoint.queryConfig);
-
             const response = await dataEndpointService.testQuery({
                 connectorId: endpoint.connector.id,
-                queryConfig
+                queryConfig: endpoint.queryConfig
             });
 
             setTestResult({
                 columns: response.data.columns,
                 rows: response.data.rows
             });
-        } catch (err: any) {
+        } catch (err: unknown) {
             console.error('Test failed:', err);
-            alert(err.response?.data?.code || err.response?.data?.error || 'Failed to test endpoint');
+            const code = (err as { response?: { data?: { code?: string } } })?.response?.data?.code;
+            const errorMsg = (err as { response?: { data?: { error?: string } } })?.response?.data?.error;
+            setActionError(code || errorMsg || 'Failed to test endpoint');
         } finally {
-            setIsTesting(false);
+            setPendingAction(null);
         }
-    };
+    }, [endpoint]);
 
-    const handleToggleStatus = async () => {
+    const handleToggleStatus = useCallback(async () => {
         if (!endpoint) return;
 
         const newStatus = endpoint.status === 'ACTIVE' ? 'INACTIVE' : 'ACTIVE';
+        setPendingAction({ type: 'toggle' });
+        setActionError(null);
 
         try {
             await dataEndpointService.toggleStatus(endpoint.id, newStatus);
             setEndpoint({ ...endpoint, status: newStatus });
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to update status');
+        } catch (err: unknown) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to update status';
+            setActionError(message);
+        } finally {
+            setPendingAction(null);
         }
-    };
+    }, [endpoint]);
 
-    const handleDelete = async () => {
+    const handleDelete = useCallback(async () => {
         if (!endpoint || !confirm('Are you sure you want to delete this endpoint?')) return;
+
+        setPendingAction({ type: 'delete' });
+        setActionError(null);
 
         try {
             await dataEndpointService.delete(endpoint.id);
             navigate('/data-endpoints');
-        } catch (err: any) {
-            alert(err.response?.data?.message || 'Failed to delete endpoint');
+        } catch (err: unknown) {
+            const message = (err as { response?: { data?: { message?: string } } })?.response?.data?.message || 'Failed to delete endpoint';
+            setActionError(message);
+            setPendingAction(null);
         }
-    };
+    }, [endpoint, navigate]);
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center py-12">
-                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" />
+            <div className="flex items-center justify-center py-12" aria-live="polite" role="status">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary border-t-transparent" aria-hidden="true" />
+                <span className="sr-only">Loading endpoint details…</span>
             </div>
         );
     }
 
     if (error || !endpoint) {
         return (
-            <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500">
-                {error || 'Endpoint not found'}
+            <div className="space-y-4">
+                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500" role="alert">
+                    {error || 'Endpoint not found'}
+                </div>
+                <button
+                    onClick={() => navigate('/data-endpoints')}
+                    className="rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated"
+                >
+                    Back to List
+                </button>
             </div>
         );
     }
+
+    const isPending = (type: PendingAction['type']) => pendingAction?.type === type;
 
     return (
         <div className="space-y-6">
@@ -106,7 +138,8 @@ export const DataEndpointDetails: React.FC = () => {
                 <div className="flex items-center gap-4">
                     <button
                         onClick={() => navigate('/data-endpoints')}
-                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated hover:text-text-primary"
+                        className="rounded-lg p-2 text-text-tertiary hover:bg-surface-elevated hover:text-text-primary focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
+                        aria-label="Back to endpoints list"
                     >
                         <span className="material-symbols-outlined">arrow_back</span>
                     </button>
@@ -125,15 +158,28 @@ export const DataEndpointDetails: React.FC = () => {
                 </div>
             </div>
 
+            {/* Action Error */}
+            {actionError ? (
+                <div className="rounded-lg border border-red-500/20 bg-red-500/10 p-4 text-red-500 flex items-center justify-between" role="alert">
+                    <span>{actionError}</span>
+                    <button
+                        onClick={() => setActionError(null)}
+                        className="rounded-lg bg-red-500/20 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400"
+                    >
+                        Dismiss
+                    </button>
+                </div>
+            ) : null}
+
             {/* Actions */}
             <div className="flex gap-2">
                 <button
                     onClick={handleTestEndpoint}
-                    disabled={isTesting}
-                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated disabled:opacity-50"
+                    disabled={isPending('test')}
+                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    {isTesting ? (
-                        <span className="material-symbols-outlined animate-spin text-lg">sync</span>
+                    {isPending('test') ? (
+                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
                     ) : (
                         <span className="material-symbols-outlined text-lg">play_arrow</span>
                     )}
@@ -141,25 +187,35 @@ export const DataEndpointDetails: React.FC = () => {
                 </button>
                 <button
                     onClick={handleToggleStatus}
-                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated"
+                    disabled={isPending('toggle')}
+                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <span className="material-symbols-outlined text-lg">
-                        {endpoint.status === 'ACTIVE' ? 'pause_circle' : 'play_circle'}
-                    </span>
+                    {isPending('toggle') ? (
+                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                    ) : (
+                        <span className="material-symbols-outlined text-lg">
+                            {endpoint.status === 'ACTIVE' ? 'pause_circle' : 'play_circle'}
+                        </span>
+                    )}
                     {endpoint.status === 'ACTIVE' ? 'Deactivate' : 'Activate'}
                 </button>
                 <button
                     onClick={() => navigate(`/data-endpoints/${endpoint.id}/edit`)}
-                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated"
+                    className="flex items-center gap-2 rounded-lg border border-surface-border px-4 py-2 text-sm font-medium text-text-secondary hover:bg-surface-elevated focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary"
                 >
                     <span className="material-symbols-outlined text-lg">edit</span>
                     Edit
                 </button>
                 <button
                     onClick={handleDelete}
-                    className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20"
+                    disabled={isPending('delete')}
+                    className="flex items-center gap-2 rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-2 text-sm font-medium text-red-400 hover:bg-red-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-red-400 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                    <span className="material-symbols-outlined text-lg">delete</span>
+                    {isPending('delete') ? (
+                        <span className="material-symbols-outlined animate-spin text-lg">progress_activity</span>
+                    ) : (
+                        <span className="material-symbols-outlined text-lg">delete</span>
+                    )}
                     Delete
                 </button>
             </div>
@@ -182,7 +238,7 @@ export const DataEndpointDetails: React.FC = () => {
                         </div>
                         <div>
                             <p className="text-xs text-text-tertiary">Connector</p>
-                            <p className="text-sm text-white">{endpoint.connector.name}</p>
+                            <p className="text-sm text-white">{endpoint.connector?.name || 'Unknown Connector'}</p>
                         </div>
                         <div>
                             <p className="text-xs text-text-tertiary">Allowed Methods</p>

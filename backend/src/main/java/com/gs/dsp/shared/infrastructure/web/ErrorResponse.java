@@ -1,6 +1,6 @@
 package com.gs.dsp.shared.infrastructure.web;
 
-import com.gs.dsp.shared.infrastructure.filter.TraceIdFilter;
+
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -27,7 +27,7 @@ public class ErrorResponse {
         this.timestamp = LocalDateTime.now();
         this.code = code;
         this.message = message;
-        this.traceId = TraceIdFilter.getCurrentTraceId();
+        // TraceId is now handled by GlobalExceptionHandler
     }
 
     public ErrorResponse(String code, String message, String path) {
@@ -35,7 +35,7 @@ public class ErrorResponse {
         this.code = code;
         this.message = message;
         this.path = path;
-        this.traceId = TraceIdFilter.getCurrentTraceId();
+        // TraceId is now handled by GlobalExceptionHandler
     }
 
     public ErrorResponse(String code, String message, String path, String traceId) {

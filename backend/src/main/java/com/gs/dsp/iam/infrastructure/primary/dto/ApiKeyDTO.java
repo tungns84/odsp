@@ -5,6 +5,7 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
@@ -49,7 +50,7 @@ public class ApiKeyDTO {
     @AllArgsConstructor
     public static class CreateApiKeyRequest {
         private String name;
-        private LocalDateTime expiresAt;
+        private LocalDate expiresAt;
     }
 
     @Data

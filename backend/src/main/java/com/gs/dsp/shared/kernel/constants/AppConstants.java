@@ -49,12 +49,24 @@ public final class AppConstants {
     public static final String MASKING_TYPE_REGEX = "REGEX";
     public static final String MASKING_TYPE_NONE = "NONE";
 
+    // Masking Defaults
+    public static final String DEFAULT_MASK_VALUE = "*****";
+    public static final String DEFAULT_MASK_CHAR = "*";
+    public static final String PASSWORD_MASK_VALUE = "******";
+    public static final int SHOW_FIRST_PREFIX_LENGTH = 9; // "ShowFirst".length()
+    public static final int SHOW_LAST_PREFIX_LENGTH = 8;  // "ShowLast".length()
+
+    // Test Connection Constants
+    public static final String TEST_CONNECTION_NAME = "Test Connection";
+    public static final String TEST_TENANT_ID = "mockup-tenant";
+
     // Allowed Methods
     public static final String METHOD_GET = "GET";
     public static final String METHOD_POST = "POST";
     public static final String METHOD_PUT = "PUT";
     public static final String METHOD_DELETE = "DELETE";
     public static final String METHOD_OPTIONS = "OPTIONS";
+    public static final String METHOD_PATCH = "PATCH";
 
     // Join Types
     public static final String JOIN_INNER = "INNER";

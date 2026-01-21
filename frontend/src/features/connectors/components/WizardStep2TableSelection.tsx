@@ -2,7 +2,7 @@ import React, { useState, useMemo } from 'react';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { TableSelectionSchema, type TableSelectionFormValues } from '../schemas';
-import type { TableMetadata } from '../../../types/connector';
+import type { TableMetadata } from '../../../types/connectorTypes';
 
 interface WizardStep2Props {
     availableTables: TableMetadata[];
