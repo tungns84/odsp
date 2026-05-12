@@ -60,9 +60,15 @@ public class WorkflowController {
      * Complete a task.
      */
     @PostMapping("/tasks/{taskId}/complete")
-    public ResponseEntity<Void> completeTask(@PathVariable String taskId) {
-        log.info("Completing task: {}", taskId);
-        taskService.complete(taskId);
+    public ResponseEntity<Void> completeTask(
+            @PathVariable String taskId,
+            @RequestBody(required = false) Map<String, Object> variables) {
+        log.info("Completing task: {} with variables: {}", taskId, variables);
+        if (variables != null && !variables.isEmpty()) {
+            taskService.complete(taskId, variables);
+        } else {
+            taskService.complete(taskId);
+        }
         return ResponseEntity.ok().build();
     }
 

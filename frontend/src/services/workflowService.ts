@@ -40,8 +40,8 @@ class WorkflowService {
     /**
      * Complete a task.
      */
-    async completeTask(taskId: string): Promise<void> {
-        await apiClient.post(`/api/workflow/tasks/${taskId}/complete`);
+    async completeTask(taskId: string, variables?: Record<string, unknown>): Promise<void> {
+        await apiClient.post(`/api/workflow/tasks/${taskId}/complete`, variables);
     }
 }
 
